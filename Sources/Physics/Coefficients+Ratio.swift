@@ -8,6 +8,7 @@
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
 
+import Libc
 import Helpers
 
 /// Represents a polynomial function, e.g. `2 + 3x + 4x²`.
