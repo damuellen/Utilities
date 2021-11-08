@@ -222,10 +222,3 @@ extension Ratio {
     return block + " " + description
   }
 }
-
-func * (lhs: String, rhs: String) -> String {
-  let width = min(max(terminalWidth(), 70), 100)  
-  var c = width - lhs.count - rhs.count - 1
-  c = c < 0 ? 1 : c
-  return lhs + String(repeating: " ", count: c) + rhs + "\n"
-}
