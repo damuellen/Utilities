@@ -9,6 +9,7 @@
 //
 
 import Libc
+import Helpers
 
 public typealias Heat = Double
 public typealias Pressure = Double
