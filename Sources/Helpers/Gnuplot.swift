@@ -131,6 +131,12 @@ public final class Gnuplot {
     self.init(xys: xys.map { xy in xy.map { [$0.x, $0.y] } }, titles: titles, style: style)
   }
 
+  public convenience init<S: Sequence, F: FloatingPoint>(
+    xys: S..., titles: [String] = [], style: Style = .linePoints) where S.Element == Array<F>
+  {
+    self.init(xys: xys.map { xy in xy.map { $0 } }, titles: titles, style: style)
+  }
+  
   public init<T: FloatingPoint>(xys: [[[T]]], titles: [String] = [], style: Style = .linePoints) {
     let missingTitles = xys.count - titles.count
     var titles = titles
