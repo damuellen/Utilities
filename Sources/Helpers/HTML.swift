@@ -17,11 +17,11 @@ import WinSDK
 ///
 /// Call the `render()` method to turn it into a string.
 public struct HTML {
+  var data: Data { raw.data(using: .utf8)! }
   /// Creates an html string from the document
   public func render() -> String { return raw }
   /// Create a pdf file from the document.
   public func pdf(toFile name: String) throws {
-    guard let data = raw.data(using: .utf8) else { return }
     let html = URL.temporaryFile().appendingPathExtension("html")
     try data.write(to: html)
     let path = html.path
