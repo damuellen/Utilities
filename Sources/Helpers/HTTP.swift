@@ -331,7 +331,7 @@ extension HTTP {
       case headerEndNotFound
     }
     let method: Method
-    let uri: String
+    public let uri: String
     private(set) var headers: [String] = []
     private(set) var parameters: [String: String] = [:]
     var messageBody: String?
