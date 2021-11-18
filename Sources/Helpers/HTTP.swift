@@ -102,7 +102,7 @@ class TCPSocket: CustomStringConvertible {
 #if os(Windows)
     socket = try attempt("WSASocketW", valid: { $0 != INVALID_SOCKET }, WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP.rawValue, nil, 0, DWORD(WSA_FLAG_OVERLAPPED)))
     var value: Int8 = 1
-    _ = try attempt("setsockopt", valid: { $0 == 0 }, setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &value, Int32(MemoryLayout.size(ofValue: value))))
+    _ = try attempt("setsockopt", valid: { $0 == 0 }, setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &value, Int32(MemoryLayout.size(ofValue: value))))
 #else
 #if os(Linux) && !os(Android)
     let SOCKSTREAM = Int32(SOCK_STREAM.rawValue)
@@ -116,7 +116,7 @@ class TCPSocket: CustomStringConvertible {
 #endif
     
     var on: CInt = 1
-    _ = try attempt("setsockopt", valid: { $0 == 0 }, setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &on, socklen_t(MemoryLayout<CInt>.size)))
+    _ = try attempt("setsockopt", valid: { $0 == 0 }, setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, socklen_t(MemoryLayout<CInt>.size)))
 #endif
     let sa = createSockaddr(port)
     socketAddress.initialize(to: sa)
