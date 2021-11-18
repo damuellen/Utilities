@@ -43,9 +43,9 @@ public class HTTP {
       if HTTP.serverActive { return }
       HTTP.server = try Server(port: 9080)
       HTTP.serverActive = true
-      let httpServer = try HTTP.server!.listen()
       while HTTP.serverActive {
         do {
+          let httpServer = try HTTP.server!.listen()
           let request = try httpServer.request()
           try httpServer.respond(with: handler(request))
         } catch { if HTTP.serverActive {} }
