@@ -397,14 +397,19 @@ extension HTTP {
     private let responseCode: Int
     private var headers: [String]
     public let bodyData: Data
-    public init(responseCode: Int, headers: [String] = [], bodyData: Data) {
+    public init(responseCode: Int = 200, headers: [String] = [], bodyData: Data) {
       self.responseCode = responseCode
       self.headers = headers
       self.bodyData = bodyData
       for header in headers { if header.lowercased().hasPrefix("content-length") { return } }
       self.headers.append("Content-Length: \(bodyData.count)")
     }
-    public init(response: ResponseCode, headers: [String] = [], bodyData: Data = Data()) { self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData) }
+    public init(responseCode: Int = 200, headers: [String] = [], html: HTML) {
+      self.init(responseCode: responseCode, headers: headers, bodyData: html.data)
+    }
+    public init(response: ResponseCode, headers: [String] = [], bodyData: Data = Data()) { 
+      self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData) 
+    }
     public init(response: ResponseCode, headers: String = Headers.EMPTY, bodyData: Data) {
       let headers = headers.split(separator: "\r\n").map { String($0) }
       self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData)
