@@ -67,24 +67,23 @@ public final class Gnuplot {
   }
   
   static private func settings(_ style: Style) -> [String] {
-    let lw, pt, ps: String
+    let lw, ps: String
     if case .points = style {
       lw = "lw 2"
-      pt = "pt 6"
       ps = "ps 1.0"
     } else {
       lw = "lw 1.5"
-      pt = "pt 6"
-      ps = "ps 1.5"
+      ps = "ps 1.2"
     }
+    var points = Array(1...7).shuffled()
     return [
-      "style line 11 lt 1 \(lw) \(pt) \(ps) lc rgb '#0072bd'",
-      "style line 12 lt 1 \(lw) \(pt) \(ps) lc rgb '#d95319'",
-      "style line 13 lt 1 \(lw) \(pt) \(ps) lc rgb '#edb120'",
-      "style line 14 lt 1 \(lw) \(pt) \(ps) lc rgb '#7e2f8e'",
-      "style line 15 lt 1 \(lw) \(pt) \(ps) lc rgb '#77ac30'",
-      "style line 16 lt 1 \(lw) \(pt) \(ps) lc rgb '#4dbeee'",
-      "style line 17 lt 1 \(lw) \(pt) \(ps) lc rgb '#a2142f'",
+      "style line 11 lt 1 \(lw) pt \(points.removeLast()) \(ps) lc rgb '#0072bd'",
+      "style line 12 lt 1 \(lw) pt \(points.removeLast()) \(ps) lc rgb '#d95319'",
+      "style line 13 lt 1 \(lw) pt \(points.removeLast()) \(ps) lc rgb '#edb120'",
+      "style line 14 lt 1 \(lw) pt \(points.removeLast()) \(ps) lc rgb '#7e2f8e'",
+      "style line 15 lt 1 \(lw) pt \(points.removeLast()) \(ps) lc rgb '#77ac30'",
+      "style line 16 lt 1 \(lw) pt \(points.removeLast()) \(ps) lc rgb '#4dbeee'",
+      "style line 17 lt 1 \(lw) pt \(points.removeLast()) \(ps) lc rgb '#a2142f'",
       "style line 21 lt 1 lw 3 pt 9 ps 0.8 lc rgb '#0072bd'",
       "style line 22 lt 1 lw 3 pt 9 ps 0.8 lc rgb '#d95319'",
       "style line 23 lt 1 lw 3 pt 9 ps 0.8 lc rgb '#edb120'",
