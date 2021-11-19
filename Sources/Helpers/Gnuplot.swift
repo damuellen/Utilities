@@ -20,7 +20,13 @@ public final class Gnuplot {
   }
 #endif
   public var svg: String? {
-    try? String(decoding: self(.svg(path: "")), as: Unicode.UTF8.self)
+    var last = UInt8(0)
+    guard let string = try? self(.svg(path: "")).drop(while: { 
+      if last == UInt8(ascii: ">") { return false }
+      last = $0
+      return true
+    }) else { return nil }
+    return String(decoding: string, as: Unicode.UTF8.self)
   }
   
   public init(data: String) {
