@@ -46,6 +46,10 @@ public struct HTML {
     let refresh = (refresh > 0) ? "<meta http-equiv=\"refresh\" content=\"\(refresh)\">\n" : ""
     self.meta = "<meta charset=\"utf-8\">\n" + refresh
   }
+  
+  public mutating func add(body: String) {
+    bodyContent.append(body)
+  } 
   /// Optional json content to be rendered.
   public var json: String? = nil
 
@@ -141,7 +145,7 @@ public struct HTML {
     if let json = json {
       return type + head + "<body>" + bodyContent + script + json + ")</script>" + tail
     }
-    let click = "<body onclick=\"document.documentElement.requestFullscreen();\")>"
+    let click = "<body onclick=\"document.documentElement.requestFullscreen(); window.stop();\">"
     return type + head + click + bodyContent + tail
   }
 }
