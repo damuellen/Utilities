@@ -140,12 +140,13 @@ public struct HTML {
     """
 
   private var raw: String {
-    let head = "<html lang=\"en\"><head>" + meta + style + "</head>\n"
+    let head = "<html lang=\"en\"><head>" + meta + style + "</head>\n<body>\n"
     let tail = "</body>\n</html>\n"
+    let full = "<button onclick=\"window.stop(); document.documentElement.requestFullscreen();\" style=\"position: fixed; left: 8px; top: 8px; z-index: 1;\">Fullscreen</button>\n"
+    let cancel = "<a href=\"/cancel\"><button style=\"position: fixed; right: 8px; top: 8px; z-index: 1;\">Cancel</button></a>\n"
     if let json = json {
-      return type + head + "<body>" + bodyContent + script + json + ")</script>" + tail
+      return type + head + cancel + full + bodyContent + script + json + ")</script>" + tail
     }
-    let click = "<body onclick=\"document.documentElement.requestFullscreen(); window.stop();\">"
-    return type + head + click + bodyContent + tail
+    return type + head + cancel + full + bodyContent + tail
   }
 }
