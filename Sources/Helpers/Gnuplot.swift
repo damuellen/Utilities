@@ -190,38 +190,46 @@ public final class Gnuplot {
     self.init(xys: xys, titles: titles, style: style)   
   }
 
-  public init<T: FloatingPoint>(
-    xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
-      let missingTitles = xy1s.count + xy2s.count - titles.count
-      var titles = titles
-      if missingTitles > 0 {
-        titles.append(contentsOf: repeatElement("-", count: missingTitles))
-      }
-      
-      self.settings = Gnuplot.settings(style)
-      
-      let y1 = zip(titles, xy1s).map { t, xys in t + "\n" + separated(xys) }
-      let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + "\n" + separated(xys) }
-      
-      self.datablock = "\n$data <<EOD\n"
-        + y1.joined(separator: "\n\n\n") + "\n\n\n"
-        + y2.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
-      
-      let (s, l) = style.raw
-      let t = "title columnheader(1)"
-      self.plot = "\nset ytics nomirror\nset y2tics\nplot "
-      + xy1s.indices.filter { (xy1s[$0].first?.count ?? 0) > 1 }.map { i in
-        (2...xy1s[i][0].count).map { c in
-          "$data i \(i) u 1:\(c) \(s) axes x1y1 w \(l) ls \(i+c+9) \(t)"
-        }.joined(separator: ", ")
-      }.joined(separator: ", ") + ", "
-      + xy2s.indices.filter { (xy2s[$0].first?.count ?? 0) > 1 }.map { i in
-        (2...xy2s[i][0].count).map { c in
-          "$data i \(i + xy1s.endIndex) u 1:\(c) \(s) axes x1y2 w \(l) ls \(i+c+19) \(t)"
-        }.joined(separator: ", ")
-      }.joined(separator: ", ") + "\n"
+  public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
+    self.init(xy1s: xy1s, xy2s: xy2s, titles: titles, style: style)   
+  }
+#endif
+
+  public init<T: FloatingPoint>(xy1s: [[[T]]] = [], xy2s: [[[T]]] = [], titles: [String] = [], style: Style = .linePoints) {
+    let missingTitles = xy1s.count + xy2s.count - titles.count
+    var titles = titles
+    if missingTitles > 0 {
+      titles.append(contentsOf: repeatElement("-", count: missingTitles))
     }
-  #endif
+    
+    self.settings = Gnuplot.settings(style)
+    
+    let y1 = zip(titles, xy1s).map { t, xys in t + "\n" + separated(xys) }
+    let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + " ,\n" + separated(xys) }
+    
+    self.datablock = "\n$data <<EOD\n"
+      + y1.joined(separator: "\n\n\n") + "\n\n\n"
+      + y2.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
+    
+    let (s, l) = style.raw
+    self.plot = "\nset ytics nomirror\nset y2tics\nplot " + xy1s.indices.map { i in 
+      if (xy1s[i].first?.count ?? 0) > 1 {
+        return (2...xy1s[i][0].count).map { c in 
+          "$data i \(i) u 1:\(c) \(s) axes x1y1 w \(l) ls \(i+c+9) title columnheader(1)" 
+        }.joined(separator: ", ")
+      } else {
+        return "$data i \(i) u 0:1 \(s) axes x1y1 w \(l) ls \(i+11) title columnheader(1)" 
+      }
+    }.joined(separator: ", ") + ", " + xy2s.indices.map { i in 
+      if (xy2s[i].first?.count ?? 0) > 1 {
+        return (2...xy2s[i][0].count).map { c in 
+          "$data i \(i + xy1s.endIndex) u 1:\(c) \(s) axes x1y2 w \(l) ls \(i+c+19) title columnheader(1)" 
+        }.joined(separator: ", ")
+      } else {
+        return "$data i \(i + xy1s.endIndex) u 0:1 \(s) axes x1y2 w \(l) ls \(i+21) title columnheader(1)" 
+      }
+    }.joined(separator: ", ") + "\n"
+  }
   
   public enum Style {
     case lines(smooth: Bool)
