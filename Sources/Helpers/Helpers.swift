@@ -77,6 +77,14 @@ extension URL {
 }
 
 @_alwaysEmitIntoClient
+extension Collection where Self.Iterator.Element: RandomAccessCollection {
+  public func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
+    guard let firstRow = self.first else { return [] }
+    return firstRow.indices.map { index in self.map { $0[index] } }
+  }
+}
+
+@_alwaysEmitIntoClient
 public func seek(goal: Double, _ range: ClosedRange<Double> = 0...1,
  tolerance: Double = 0.0001, maxIterations: Int = 100,
  _ f: (Double)-> Double) -> Double {
