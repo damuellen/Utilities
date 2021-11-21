@@ -156,8 +156,11 @@ public final class Gnuplot {
     self.datablock = "\n$data <<EOD\n" + data.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
     
     let (s, l) = style.raw
-    self.plot = "\nplot " + xys.indices.map { i in
-      "$data i \(i) u 1:2 \(s) w \(l) ls \(i+11) title columnheader(1)"
+    let valid = xys.indices.filter { (xys[$0].first?.count ?? 0) > 1 }
+    if valid.count < xys.count { print("No y-values available for plot") }
+    self.plot = "\nplot " + valid.map { i in (2...xys[i][0].count)
+      .map { c in "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+11) title columnheader(1)" }
+      .joined(separator: ", ")
     }.joined(separator: ", ") + "\n"
   }
   #if swift(>=5.4)
@@ -200,12 +203,14 @@ public final class Gnuplot {
       let t = "title columnheader(1)"
       self.plot = "\nset ytics nomirror\nset y2tics\nplot "
       + xy1s.indices.map { i in
-        let c = xy1s[i][0].count
-        return "$data i \(i) u 1:\(c) \(s) axes x1y1 w \(l) ls \(i+11) \(t)"
+        xy1s[i].isEmpty ? "" : (2...min(xy1s[i][0].count, 2)).map { c in
+          "$data i \(i) u 1:\(c) \(s) axes x1y1 w \(l) ls \(i+11) \(t)"
+        }.joined(separator: ", ")
       }.joined(separator: ", ") + ", "
-      + xy2s.indices.map { i in 
-        let n = i + xy1s.endIndex
-        return "$data i \(n) u 1:2 \(s) axes x1y2 w \(l) ls \(i+21) \(t)"
+      + xy2s.indices.map { i in
+        xy2s[i].isEmpty ? "" : (2...min(xy2s[i][0].count, 2)).map { c in
+          "$data i \(i + xy1s.endIndex) u 1:\(c) \(s) axes x1y2 w \(l) ls \(i+21) \(t)"
+        }.joined(separator: ", ")
       }.joined(separator: ", ") + "\n"
     }
   #endif
