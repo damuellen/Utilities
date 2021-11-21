@@ -247,11 +247,11 @@ public final class Gnuplot {
       switch self {
       case .svg(let path):
         #if os(Windows)
-        let height = 600
+        let height = 600 // wide
         #elseif os(Linux)
-        let height = 800
+        let height = 750 // 4:3
         #else
-        let height = 710
+        let height = 710 // golden ratio
         #endif
         return "set term svg size 1000,\(height)\n"
         + "set output \(path.isEmpty ? "" : ("'" + path + "'"))\n"
