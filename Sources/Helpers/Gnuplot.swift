@@ -166,7 +166,7 @@ public final class Gnuplot {
   public convenience init<S: Collection, F: FloatingPoint>(
     xs: S..., ys: S..., titles: String..., style: Style = .linePoints) where S.Element == F
   {
-    if xs.count == 1, ys.count > 1 {
+    if xs.count == 1, ys.count > 1, !ys.map(\.count).contains(where: { $0 != xs[0].count }) {
       let xys = xs[0].indices.map { index in [xs[0][index]] + ys.map { $0[index] } }
       self.init(xys: xys, titles: titles, style: style)
     } else {
