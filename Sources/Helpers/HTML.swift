@@ -107,6 +107,7 @@ public struct HTML {
   private let style = """
     <style media="print">
       svg { font-family: sans-serif; font-size: 16px;}
+      button { display: none; }
     </style>
     <style media="screen">
       svg {
