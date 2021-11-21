@@ -246,7 +246,14 @@ public final class Gnuplot {
       
       switch self {
       case .svg(let path):
-        return "set term svg size 1000,710\n"
+        #if os(Windows)
+        let height = 600
+        #elseif os(Linux)
+        let height = 800
+        #else
+        let height = 710
+        #endif
+        return "set term svg size 1000,\(height)\n"
         + "set output \(path.isEmpty ? "" : ("'" + path + "'"))\n"
       case .pdf(let path):
         return "set term pdfcairo size 10,7.1 enhanced \(font)14'\n"
