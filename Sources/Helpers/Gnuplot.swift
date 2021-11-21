@@ -149,29 +149,37 @@ public final class Gnuplot {
       titles.append(contentsOf: repeatElement("-", count: missingTitles))
     }
 
-    let data = zip(titles, xys).map { title, xys in title + " ,\n" + csv(xys) }
+    let data = zip(titles, xys).map { title, xys in title + " ,\n" + separated(xys) }
     
     self.settings = Gnuplot.settings(style)
     
     self.datablock = "\n$data <<EOD\n" + data.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
     
     let (s, l) = style.raw
-    self.plot = "\nplot " + xys.indices.filter { (xys[$0].first?.count ?? 0) > 1 }
-      .map { i in (2...xys[i][0].count).map { c in 
+    self.plot = "\nplot " + xys.indices.map { i in 
+      if (xys[i].first?.count ?? 0) > 1 {
+      return (2...xys[i][0].count).map { c in 
           "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(1)" 
         }.joined(separator: ", ")
-      }.joined(separator: ", ") + "\n"
+      } else {
+        return "$data i \(i) u 0:1 \(s) w \(l) ls \(i+11) title columnheader(1)" 
+      }
+    }.joined(separator: ", ") + "\n"
   }
   #if swift(>=5.4)
   public convenience init<S: Collection, F: FloatingPoint>(
     xs: S..., ys: S..., titles: String..., style: Style = .linePoints) where S.Element == F
   {
-    if xs.count == 1, ys.count > 1, !ys.map(\.count).contains(where: { $0 != xs[0].count }) {
+    if xs.isEmpty {
+      self.init(xys: ys.map{$0.map{[$0]}}, titles: titles, style: style)
+    } else if ys.isEmpty {
+      self.init(xys: xs.map{$0.map{[$0]}}, titles: titles, style: style)
+    } else if xs.count == 1, ys.count > 1, !ys.map(\.count).contains(where: { $0 != xs[0].count }) {
       let xys = xs[0].indices.map { index in [xs[0][index]] + ys.map { $0[index] } }
       self.init(xys: xys, titles: titles, style: style)
     } else {
       self.init(xys: zip(xs, ys).map { a, b in zip(a, b).map { [$0, $1] } }, titles: titles, style: style)
-    }   
+    }
   }
 
   public convenience init<X: Collection, Y: Collection, F: FloatingPoint, S: SIMD>(
@@ -192,8 +200,8 @@ public final class Gnuplot {
       
       self.settings = Gnuplot.settings(style)
       
-      let y1 = zip(titles, xy1s).map { t, xys in t + " ,\n" + csv(xys) }
-      let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + " ,\n" + csv(xys) }
+      let y1 = zip(titles, xy1s).map { t, xys in t + " ,\n" + separated(xys) }
+      let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + " ,\n" + separated(xys) }
       
       self.datablock = "\n$data <<EOD\n"
         + y1.joined(separator: "\n\n\n") + "\n\n\n"
@@ -287,8 +295,8 @@ public final class Gnuplot {
   ]
 }
 
-private func csv<T: FloatingPoint>(_ xys: [[T]]) -> String {
-  xys.map { xy in xy.map { "\($0)" }.joined(separator: ", ") }.joined(separator: "\n")
+private func separated<T: FloatingPoint>(_ xys: [[T]]) -> String {
+  xys.map { xy in xy.map { "\($0)" }.joined(separator: " ") }.joined(separator: "\n")
 }
 
 extension Array where Element == String {
