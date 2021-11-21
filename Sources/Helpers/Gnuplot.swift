@@ -149,7 +149,7 @@ public final class Gnuplot {
       titles.append(contentsOf: repeatElement("-", count: missingTitles))
     }
 
-    let data = zip(titles, xys).map { title, xys in title + " ,\n" + separated(xys) }
+    let data = zip(titles, xys).map { title, xys in title + "\n" + separated(xys) }
     
     self.settings = Gnuplot.settings(style)
     
@@ -158,7 +158,7 @@ public final class Gnuplot {
     let (s, l) = style.raw
     self.plot = "\nplot " + xys.indices.map { i in 
       if (xys[i].first?.count ?? 0) > 1 {
-      return (2...xys[i][0].count).map { c in 
+        return (2...xys[i][0].count).map { c in 
           "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(1)" 
         }.joined(separator: ", ")
       } else {
@@ -200,8 +200,8 @@ public final class Gnuplot {
       
       self.settings = Gnuplot.settings(style)
       
-      let y1 = zip(titles, xy1s).map { t, xys in t + " ,\n" + separated(xys) }
-      let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + " ,\n" + separated(xys) }
+      let y1 = zip(titles, xy1s).map { t, xys in t + "\n" + separated(xys) }
+      let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + "\n" + separated(xys) }
       
       self.datablock = "\n$data <<EOD\n"
         + y1.joined(separator: "\n\n\n") + "\n\n\n"
