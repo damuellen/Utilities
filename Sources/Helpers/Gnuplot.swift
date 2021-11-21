@@ -163,11 +163,12 @@ public final class Gnuplot {
       }.joined(separator: ", ") + "\n"
   }
   #if swift(>=5.4)
-  public convenience init<S: Sequence, F: FloatingPoint>(
+  public convenience init<S: Collection, F: FloatingPoint>(
     xs: S..., ys: S..., titles: String..., style: Style = .linePoints) where S.Element == F
   {
     if xs.count == 1, ys.count > 1 {
-      self.init(xys: zip(repeatElement(xs[0], count: ys.count), ys).map { a, b in zip(a, b).map { [$0, $1] } }, titles: titles, style: style)
+      let xys = xs[0].indices.map { index in [xs[0][index]] + ys.map { $0[index] } }
+      self.init(xys: xys, titles: titles, style: style)
     } else {
       self.init(xys: zip(xs, ys).map { a, b in zip(a, b).map { [$0, $1] } }, titles: titles, style: style)
     }   
