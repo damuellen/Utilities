@@ -43,8 +43,32 @@ public struct HTML {
   /// Creates an HTML document with the given body.
   public init(body: String? = nil, refresh: Int = 0) {
     self.bodyContent = body ?? (Bool.random() ? HTML.lazySVG : HTML.sleepSVG)
-    let refresh = (refresh > 0) ? "<meta http-equiv=\"refresh\" content=\"\(refresh)\">\n" : ""
-    self.meta = "<meta charset=\"utf-8\">\n" + refresh
+    self.meta = "<meta charset=\"utf-8\">\n" + ((refresh > 0) ? """
+    <meta http-equiv=\"refresh\" content=\"\(refresh)\">
+    <style type="text/css">
+    @keyframes moving { 
+        0%   { opacity:0; transform: translate3d(-100%, 0, 0); }
+        3%   { opacity:1; transform: none; }
+        97%  { opacity:1; transform: none; }
+        100% { opacity:0; transform: translate3d(100%, 0, 0); }
+    }
+    @keyframes fade { 
+        0%   { opacity:0; transform: translate3d(0, -100%, 0); }
+        20%  { opacity:1; transform: none; }
+        80%  { opacity:1; }
+        95%  { opacity:0; }
+        100% { opacity:0; }
+    }
+    svg {
+        opacity:0;  
+        animation: moving \(refresh)s;
+    }
+    #Layer_1 {
+        opacity:0;  
+        animation: fade \(refresh)s;
+    }
+    </style>
+    """ : "")
   }
   
   public mutating func add(body: String) {
