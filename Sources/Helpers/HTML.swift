@@ -48,13 +48,13 @@ public struct HTML {
     <style type="text/css">
     @keyframes moving { 
         0%   { opacity:0; transform: translate3d(-100%, 0, 0); }
-        3%   { opacity:1; transform: none; }
-        97%  { opacity:1; transform: none; }
+        4%   { opacity:1; transform: none; }
+        96%  { opacity:1; transform: none; }
         100% { opacity:0; transform: translate3d(100%, 0, 0); }
     }
     @keyframes fade { 
         0%   { opacity:0; transform: translate3d(0, -100%, 0); }
-        20%  { opacity:1; transform: none; }
+        15%  { opacity:1; transform: none; }
         80%  { opacity:1; }
         95%  { opacity:0; }
         100% { opacity:0; }
