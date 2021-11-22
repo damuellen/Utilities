@@ -39,16 +39,20 @@ public func terminalWidth() -> Int {
 #endif
 }
 
-public func openFile(atPath: String) {
+public func start(_ command: String) {
 #if os(Windows)
-  system("start " + atPath)
+  command.withCString(encodedAs: UTF16.self) { wszCommand in
+    ShellExecute(nil, "open", wszCommand, nil, nil, SW_SHOWNORMAL)
+  }
+  //system("start " + command)
 #elseif os(macOS)
-  try? Process.run(
+  do { try Process.run(
     URL(fileURLWithPath: "/usr/bin/open"),
-    arguments: [atPath]
-  )
+    arguments: [command]
+  ) } catch {}
 #endif
 }
+
 extension FileManager {
   static func transientDirectory(url: (URL) throws -> Void) throws {
     let fm = FileManager.default
