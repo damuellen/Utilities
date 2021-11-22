@@ -42,8 +42,8 @@ public func terminalWidth() -> Int {
 public func start(_ command: String) {
 #if os(Windows)
   command.withCString(encodedAs: UTF16.self) { wszCommand in
-    ShellExecuteW(nil, "open", wszCommand, nil, nil, 8)
-  }
+    "open".withCString(encodedAs: UTF16.self) { operation in
+      ShellExecuteW(nil, operation, wszCommand, nil, nil, 8) }}
   //system("start " + command)
 #elseif os(macOS)
   do { try Process.run(
