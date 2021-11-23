@@ -46,26 +46,16 @@ public struct HTML {
     self.meta = "<meta charset=\"utf-8\">\n" + ((refresh > 0) ? """
     <meta http-equiv=\"refresh\" content=\"\(refresh)\">
     <style type="text/css">
-    @keyframes moving { 
-        0%   { opacity:0; transform: translate3d(-100%, 0, 0); }
-        4%   { opacity:1; transform: none; }
-        96%  { opacity:1; transform: none; }
-        100% { opacity:0; transform: translate3d(100%, 0, 0); }
-    }
-    @keyframes fade { 
-        0%   { opacity:0; transform: translate3d(0, -100%, 0); }
+       @keyframes move {
+        0%   { opacity:0; transform: translateY(-100%); }
         15%  { opacity:1; transform: none; }
         80%  { opacity:1; }
         95%  { opacity:0; }
         100% { opacity:0; }
     }
-    svg {
-        opacity:0;  
-        animation: moving \(refresh)s;
-    }
     #Layer_1 {
-        opacity:0;  
-        animation: fade \(refresh)s;
+        opacity:0;
+        animation: move \(refresh)s;
     }
     </style>
     """ : "")
