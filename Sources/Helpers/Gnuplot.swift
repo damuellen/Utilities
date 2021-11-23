@@ -30,10 +30,10 @@ public final class Gnuplot {
     else { return nil }
     return String(decoding: string, as: Unicode.UTF8.self)
   }
-  public init(data: String) {
-    self.datablock = data
+  public init(data: String, style: Style = .linePoints) {
+    self.datablock = "\n$data <<EOD\n" + data + "\n\n\nEOD\n\n"
     self.plotCommand = "$data"
-    self.settings = [:]
+    self.settings = Gnuplot.settings(style)
   }
   public static func process() -> Process {
     let gnuplot = Process()
@@ -60,21 +60,25 @@ public final class Gnuplot {
   }
   public func commands(_ terminal: Terminal) -> String {
     let config: String
-    if case .svg = terminal { config = (settings.concatenated + SVG.concatenated) } 
-    else if case .pdf = terminal { config = (settings.concatenated + PDF.concatenated) }
-    else { config = (settings.concatenated + PNG.concatenated + SVG.concatenated) }
-    let plot = userCommand ?? "\nplot " + plotCommand
-    return datablock + config + terminal.output + plot + "\nexit\n\n"
+    if case .svg = terminal {
+      config = (settings.merging(terminal.output){old,_ in old}.concatenated + SVG.concatenated) } 
+    else if case .pdf = terminal {
+      config = (settings.merging(terminal.output){_,new in new}.concatenated + PDF.concatenated) }
+    else { 
+      config = (settings.merging(terminal.output){_,new in new}.concatenated + PNG.concatenated + SVG.concatenated) 
+    }
+    let plot = userCommand ?? plotCommand
+    return datablock + config + plot + "\nexit\n\n"
   }
-  public func set(title: String) -> Self {
+  @discardableResult public func set(title: String) -> Self {
     settings["title"] = "'\(title)'"
     return self
   }
-  public func set(xlabel: String) -> Self {
+  @discardableResult public func set(xlabel: String) -> Self {
     settings["xlabel"] = "'\(xlabel)'"
     return self
   }
-  public func set(ylabel: String) -> Self {
+  @discardableResult public func set(ylabel: String) -> Self {
     settings["ylabel"] = "'\(ylabel)'"
     return self
   }
@@ -114,38 +118,15 @@ public final class Gnuplot {
   public var settings: [String: String]
   public var userCommand: String? = nil
 
-  public init(temperatures: String) {
-    self.settings = Gnuplot.settings(.linePoints).merging(
-      ["term": "svg size 1280,800", "encoding":" utf8",
-      "xtics": "10", "ytics": "10",
-      "xlabel": "'Q̇ [MW]' textcolor rgb 'black'",
-      "ylabel": "'Temperatures [°C]' textcolor rgb 'black'"]
-    ) { (_, new) in new }
-
-    self.datablock = "\n$data <<EOD\n" + temperatures + "\n\n\nEOD\n"
-    self.plotCommand = """
-      $data i 0 u 1:2 w lp ls 11 title columnheader(1), \
-      $data i 1 u 1:2 w lp ls 12 title columnheader(1), \
-      $data i 2 u 1:2 w lp ls 13 title columnheader(1), \
-      $data i 3 u 1:2 w lp ls 15 title columnheader(1), \
-      $data i 4 u 1:2 w lp ls 14 title columnheader(1), \
-      $data i 5 u 1:2 w lp ls 14 title columnheader(1), \
-      $data i 0 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-      $data i 2 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-      $data i 3 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-      $data i 4 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-      $data i 5 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle
-      """
-  }
   public init<T: FloatingPoint>(xys: [[[T]]], titles: [String] = [], style: Style = .linePoints) {
     let missingTitles = xys.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
     let data = zip(titles, xys).map { title, xys in title + "\n" + separated(xys) }
-    self.datablock = "\n$data <<EOD\n" + data.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
+    self.datablock = "\n$data <<EOD\n" + data.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
     self.settings = Gnuplot.settings(style)
     let (s, l) = style.raw
-    self.plotCommand = xys.indices
+    self.plotCommand = "plot " + xys.indices
       .map { i in
         if (xys[i].first?.count ?? 0) > 1 {
           return (2...xys[i][0].count).map { c in "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(1)" }.joined(separator: ", \\\n")
@@ -162,9 +143,9 @@ public final class Gnuplot {
     self.settings = Gnuplot.settings(style).merging(["ytics": "nomirror", "y2tics": ""]) { (_, new) in new }
     let y1 = zip(titles, xy1s).map { t, xys in t + "\n" + separated(xys) }
     let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + " ,\n" + separated(xys) }
-    self.datablock = "\n$data <<EOD\n" + y1.joined(separator: "\n\n\n") + (xy2s.isEmpty ? "" : "\n\n\n") + y2.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
+    self.datablock = "\n$data <<EOD\n" + y1.joined(separator: "\n\n\n") + (xy2s.isEmpty ? "" : "\n\n\n") + y2.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
     let (s, l) = style.raw
-    self.plotCommand =
+    self.plotCommand = "plot " +
       xy1s.indices
       .map { i in
         if (xy1s[i].first?.count ?? 0) > 1 {
@@ -230,7 +211,7 @@ public final class Gnuplot {
     case png(path: String)
     case pngSmall(path: String)
     case pngLarge(path: String)
-    var output: String {
+    var output: [String:String] {
       #if os(Linux)
       let font = "font 'Times,"
       #else
@@ -245,11 +226,11 @@ public final class Gnuplot {
         #else
         let height = 710
         #endif
-        return "set term svg size 1000,\(height)\n" + "set output \(path.isEmpty ? "" : ("'" + path + "'"))\n"
-      case .pdf(let path): return "set term pdfcairo size 10,7.1 enhanced \(font)14'\n" + "set output \(path.isEmpty ? "" : ("'" + path + "'"))\n"
-      case .png(let path): return "set term pngcairo size 1440, 900 enhanced \(font)12'\n" + "set output \(path.isEmpty ? "" : ("'" + path + "'"))\n"
-      case .pngSmall(let path): return "set term pngcairo size 1024, 720 enhanced \(font)12'\n" + "set output \(path.isEmpty ? "" : ("'" + path + "'"))\n"
-      case .pngLarge(let path): return "set term pngcairo size 1920, 1200 enhanced \(font)14'\n" + "set output \(path.isEmpty ? "" : ("'" + path + "'"))\n"
+        return ["term":"svg size 1000,\(height)\n", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))\n"]
+      case .pdf(let path): return ["term":"pdfcairo size 10,7.1 enhanced \(font)14'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
+      case .png(let path): return ["term":"pngcairo size 1440, 900 enhanced \(font)12'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
+      case .pngSmall(let path): return ["term":"pngcairo size 1024, 720 enhanced \(font)12'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
+      case .pngLarge(let path): return ["term":"pngcairo size 1920, 1200 enhanced \(font)14'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
       }
     }
   }
