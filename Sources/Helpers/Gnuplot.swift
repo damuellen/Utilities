@@ -32,7 +32,7 @@ public final class Gnuplot {
   }
   public init(data: String) {
     self.datablock = data
-    self.plot = "$data"
+    self.plotCommand = "$data"
     self.settings = [:]
   }
   public static func process() -> Process {
@@ -63,8 +63,8 @@ public final class Gnuplot {
     if case .svg = terminal { config = (settings.concatenated + SVG.concatenated) } 
     else if case .pdf = terminal { config = (settings.concatenated + PDF.concatenated) }
     else { config = (settings.concatenated + PNG.concatenated + SVG.concatenated) }
-    let command = userCommand ?? "\nplot " + plot
-    return datablock + terminal.output + config + command + "\nexit\n\n"
+    let plot = userCommand ?? "\nplot " + plotCommand
+    return datablock + config + terminal.output + plot + "\nexit\n\n"
   }
   public func set(title: String) -> Self {
     settings["title"] = "'\(title)'"
@@ -78,7 +78,7 @@ public final class Gnuplot {
     settings["ylabel"] = "'\(ylabel)'"
     return self
   }
-  static private func settings(_ style: Style) -> [String: String] {
+  private static func settings(_ style: Style) -> [String: String] {
     let lw: String
     let ps: String
     if case .points = style {
@@ -116,37 +116,36 @@ public final class Gnuplot {
 
   public init(temperatures: String) {
     self.settings = Gnuplot.settings(.linePoints).merging(
-      ["term": "svg size 1280,800", 
-      "xtics": "10", 
-      "ytics": "10",
+      ["term": "svg size 1280,800", "encoding":" utf8",
+      "xtics": "10", "ytics": "10",
       "xlabel": "'Q̇ [MW]' textcolor rgb 'black'",
       "ylabel": "'Temperatures [°C]' textcolor rgb 'black'"]
     ) { (_, new) in new }
 
     self.datablock = "\n$data <<EOD\n" + temperatures + "\n\n\nEOD\n"
-    self.plot = """
-        $data i 0 u 1:2 w lp ls 11 title columnheader(1), \
-        $data i 1 u 1:2 w lp ls 12 title columnheader(1), \
-        $data i 2 u 1:2 w lp ls 13 title columnheader(1), \
-        $data i 3 u 1:2 w lp ls 15 title columnheader(1), \
-        $data i 4 u 1:2 w lp ls 14 title columnheader(1), \
-        $data i 5 u 1:2 w lp ls 14 title columnheader(1), \
-        $data i 0 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-        $data i 2 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-        $data i 3 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-        $data i 4 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
-        $data i 5 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle
+    self.plotCommand = """
+      $data i 0 u 1:2 w lp ls 11 title columnheader(1), \
+      $data i 1 u 1:2 w lp ls 12 title columnheader(1), \
+      $data i 2 u 1:2 w lp ls 13 title columnheader(1), \
+      $data i 3 u 1:2 w lp ls 15 title columnheader(1), \
+      $data i 4 u 1:2 w lp ls 14 title columnheader(1), \
+      $data i 5 u 1:2 w lp ls 14 title columnheader(1), \
+      $data i 0 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
+      $data i 2 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
+      $data i 3 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
+      $data i 4 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle, \
+      $data i 5 u 1:2:(sprintf("%d°C", $2)) with labels tc ls 18 offset char 3,0 notitle
       """
   }
   public init<T: FloatingPoint>(xys: [[[T]]], titles: [String] = [], style: Style = .linePoints) {
     let missingTitles = xys.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
-    self.settings = Gnuplot.settings(style)
     let data = zip(titles, xys).map { title, xys in title + "\n" + separated(xys) }
     self.datablock = "\n$data <<EOD\n" + data.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
+    self.settings = Gnuplot.settings(style)
     let (s, l) = style.raw
-    self.plot = xys.indices
+    self.plotCommand = xys.indices
       .map { i in
         if (xys[i].first?.count ?? 0) > 1 {
           return (2...xys[i][0].count).map { c in "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(1)" }.joined(separator: ", \\\n")
@@ -165,7 +164,7 @@ public final class Gnuplot {
     let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + " ,\n" + separated(xys) }
     self.datablock = "\n$data <<EOD\n" + y1.joined(separator: "\n\n\n") + (xy2s.isEmpty ? "" : "\n\n\n") + y2.joined(separator: "\n\n\n") + "\n\n\nEOD\n"
     let (s, l) = style.raw
-    self.plot =
+    self.plotCommand =
       xy1s.indices
       .map { i in
         if (xy1s[i].first?.count ?? 0) > 1 {
@@ -255,7 +254,7 @@ public final class Gnuplot {
     }
   }
   private let datablock: String
-  private let plot: String
+  private let plotCommand: String
   private let SVG = ["border 31 lw 0.5 lc rgb 'black'", "grid ls 19"]
   private let PDF = ["border 31 lw 1 lc rgb 'black'", "grid ls 18"]
   private let PNG = ["object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"]
