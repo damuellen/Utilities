@@ -86,10 +86,8 @@ public struct CSV {
     self.dataRows = rawData[start...].withUnsafeBytes { content in
       content.split(separator: newLine).map { line in
         let line = hasCR ? line.dropLast() : line
-        return line.split(separator: separator).map { slice in
-          let buffer = UnsafeRawBufferPointer(rebasing: slice)
-          return convert(buffer)
-        }
+        let buffer = UnsafeRawBufferPointer(rebasing: line)
+        return parse(buffer, separator: separator)
       }
     }
     #if DEBUG
@@ -114,31 +112,43 @@ public extension Array where Element == Double {
   }
 }
 
-private func convert(_ p: UnsafeRawBufferPointer) -> Double {
+private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
   var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
-  var r = 0.0
+  var r = [Double.zero]
   var neg = false
-  if (p.pointee == UInt8(ascii: " ")) { p = p.successor() }
-  if (p.pointee == UInt8(ascii: "-")) {
-    neg = true
-    p = p.successor()
-  }
-  while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
-    r = r * 10 + Double(p.pointee - UInt8(ascii: "0"))
-    p = p.successor()
-  }
-  if p.pointee == UInt8(ascii: ".") {
-    var f = 0.0
-    var n = 0
-    p = p.successor()
-    while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
-      f = f * 10 + Double(p.pointee - UInt8(ascii: "0"))
+  var i = 0
+  while true {
+    while p.pointee == UInt8(ascii: " ") { p = p.successor() }
+    if p.pointee == UInt8(ascii: "-") {
+      neg = true
       p = p.successor()
-      n += 1
     }
-    for _ in 0..<n { f /= 10 }
-    r += f
+    while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
+      r[i] = r[i] * 10 + Double(p.pointee - UInt8(ascii: "0"))
+      p = p.successor()
+    }
+    if p.pointee == UInt8(ascii: ".") {
+      var f = Double.zero
+      var n = 0
+      p = p.successor()
+      while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
+        f = f * 10 + Double(p.pointee - UInt8(ascii: "0"))
+        p = p.successor()
+        n += 1
+      }
+      for _ in 0..<n { f /= 10 }
+      r[i] += f
+    }
+    if neg { r[i] = -r[i] }
+    while p.pointee == UInt8(ascii: " ") { p = p.successor() }
+    if p.pointee == separator {
+      p = p.successor()
+      r.append(Double.zero)
+      i += 1
+    } else {
+      break
+    }
   }
-  if neg { r = -r }
   return r
 }
+
