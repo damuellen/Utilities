@@ -160,10 +160,12 @@ public func linearFit(x: [Double], y: [Double]) -> (Double)-> Double {
 public typealias XY = SIMD2<Double>
 
 extension Sequence where Element == XY {
-  public func plot(_ terminal: Gnuplot.Terminal) -> Data {
-    try! Gnuplot(xys: self, style: .points)(terminal)
+  public func plot(_ terminal: Gnuplot.Terminal) -> Data? {
+    try? Gnuplot(xys: self, style: .points)(terminal)
   }
 }
+
+@inlinable public func solve(inDomain range: ClosedRange<Double>, step: Double, f: (Double) -> Double) -> [[Double]] { stride(from: range.lowerBound, through: range.upperBound, by: step).map { [$0, f($0)] } }
 
 public extension Comparable {
   mutating func clamp(to limits: ClosedRange<Self>) {
