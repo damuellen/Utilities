@@ -87,8 +87,7 @@ public struct CSV {
         let line = hasCR ? line.dropLast() : line
         return line.split(separator: separator).map { slice in
           let buffer = UnsafeRawBufferPointer(rebasing: slice)
-            .baseAddress!.assumingMemoryBound(to: Int8.self)
-          return strtod(buffer, nil)
+          return convert(buffer)
         }
       }
     }
@@ -112,4 +111,33 @@ public extension Array where Element == Double {
   static func formatted(_ array: ArraySlice<[Double]>) -> String {
     array.map(\.formatted).joined(separator: "\n")
   }
+}
+
+private func convert(_ p: UnsafeRawBufferPointer) -> Double {
+  var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
+  var r = 0.0
+  var neg = false
+  if (p.pointee == UInt8(ascii: " ")) { p = p.successor() }
+  if (p.pointee == UInt8(ascii: "-")) {
+    neg = true
+    p = p.successor()
+  }
+  while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
+    r = (r*10.0) + Double(p.pointee - UInt8(ascii: "0"))
+    p = p.successor()
+  }
+  if p.pointee == UInt8(ascii: ".") {
+    var f = 0.0
+    var n = 0
+    p = p.successor()
+    while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
+      f = (f*10.0) + Double(p.pointee - UInt8(ascii: "0"))
+      p = p.successor()
+      n += 1
+    }
+    for _ in 0..<n { f /= 10 }
+    r += f
+  }
+  if neg { r = -r }
+  return r
 }
