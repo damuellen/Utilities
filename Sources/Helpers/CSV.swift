@@ -124,7 +124,7 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
       p = p.successor()
     }
     while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
-      r[i] = r[i] * 10 + Double(p.pointee - UInt8(ascii: "0"))
+      r[i] = Double(p.pointee - UInt8(ascii: "0")).addingProduct(r[i], 10)
       p = p.successor()
     }
     if p.pointee == UInt8(ascii: ".") {
@@ -132,7 +132,7 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
       var n = 0
       p = p.successor()
       while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
-        f = f * 10 + Double(p.pointee - UInt8(ascii: "0"))
+        f = Double(p.pointee - UInt8(ascii: "0")).addingProduct(f, 10)
         p = p.successor()
         n += 1
       }
