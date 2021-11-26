@@ -65,7 +65,7 @@ public struct CSV {
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
     let isSpace = { $0 != UInt8(ascii: " ") }
-    let isLetter = { $0 < UInt8(ascii: "A") }
+    let isLetter = { $0 > UInt8(ascii: "@") }
     guard let firstNewLine = rawData.firstIndex(of: newLine) else { return nil }
     let firstSeparator = rawData.firstIndex(of: separator) ?? 0
     guard firstSeparator < firstNewLine else { return nil }
