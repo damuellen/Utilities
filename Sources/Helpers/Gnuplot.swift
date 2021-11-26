@@ -261,9 +261,9 @@ public final class Gnuplot: CustomStringConvertible {
     case pngLarge(path: String)
     var output: [String:String] {
       #if os(Linux)
-      let font = "font 'Times,"
+      let font = "enhanced font 'Times,"
       #else
-      let font = "font 'Arial,"
+      let font = "font ',"
       #endif
       switch self {
       case .svg(let path):
@@ -275,10 +275,10 @@ public final class Gnuplot: CustomStringConvertible {
         let height = 710
         #endif
         return ["term":"svg size 1000,\(height)\n", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))\n"]
-      case .pdf(let path): return ["term":"pdfcairo size 10,7.1 enhanced \(font)14'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
-      case .png(let path): return ["term":"pngcairo size 1440, 900 enhanced \(font)12'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
-      case .pngSmall(let path): return ["term":"pngcairo size 1024, 720 enhanced \(font)12'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
-      case .pngLarge(let path): return ["term":"pngcairo size 1920, 1200 enhanced \(font)14'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
+      case .pdf(let path): return ["term":"pdfcairo size 10,7.1 \(font)14'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
+      case .png(let path): return ["term":"pngcairo size 1440, 900 \(font)12'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
+      case .pngSmall(let path): return ["term":"pngcairo size 1024, 720 \(font)12'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
+      case .pngLarge(let path): return ["term":"pngcairo size 1920, 1200 \(font)14'", "output":"\(path.isEmpty ? "" : ("'" + path + "'"))"]
       }
     }
   }
