@@ -263,7 +263,7 @@ public final class Gnuplot: CustomStringConvertible {
       #if os(Linux)
       let font = "enhanced font 'Times,"
       #else
-      let font = "font ',"
+      let font = "enhanced font ',"
       #endif
       switch self {
       case .svg(let path):
