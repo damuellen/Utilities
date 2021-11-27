@@ -59,21 +59,27 @@ public struct CSV {
     }
   }
 
-  public init?(url: URL, separator: Unicode.Scalar = ",") {
-    guard let rawData = try? Data(contentsOf: url) else { return nil }
+  public init?(path: String, separator: Unicode.Scalar = ",") {
+    let url = URL(fileURLWithPath: path)
+    guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
+    else { return nil }
+    self.init(data: data, separator: separator)
+  }
+
+  public init?(data: Data, separator: Unicode.Scalar = ",") {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
     let isSpace = { $0 != UInt8(ascii: " ") }
     let isLetter = { $0 > UInt8(ascii: "@") }
-    guard let firstNewLine = rawData.firstIndex(of: newLine) else { return nil }
-    let firstSeparator = rawData.firstIndex(of: separator) ?? 0
+    guard let firstNewLine = data.firstIndex(of: newLine) else { return nil }
+    let firstSeparator = data.firstIndex(of: separator) ?? 0
     guard firstSeparator < firstNewLine else { return nil }
-    let hasCR = rawData[rawData.index(before: firstNewLine)] == cr
-    let end = hasCR ? rawData.index(before: firstNewLine) : firstNewLine
-    let hasHeader = rawData[..<end].contains(where: isLetter)
-    let start = hasHeader ? rawData.index(after: firstNewLine) : rawData.startIndex
-    self.headerRow = !hasHeader ? nil : rawData[..<end].split(separator: separator).map { slice in
+    let hasCR = data[data.index(before: firstNewLine)] == cr
+    let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
+    let hasHeader = data[..<end].contains(where: isLetter)
+    let start = data ? data.index(after: firstNewLine) : data.startIndex
+    self.headerRow = !hasHeader ? nil : data[..<end].split(separator: separator).map { slice in
       String(decoding: slice.filter(isSpace), as: UTF8.self)
     }
     #if DEBUG
@@ -83,7 +89,7 @@ public struct CSV {
       print("No header.")
     }
     #endif
-    self.dataRows = rawData[start...].withUnsafeBytes { content in
+    self.dataRows = data[start...].withUnsafeBytes { content in
       content.split(separator: newLine).concurrentMap(minBatchSize: 1000) { line in
         let line = hasCR ? line.dropLast() : line
         let buffer = UnsafeRawBufferPointer(rebasing: line)
