@@ -101,7 +101,6 @@ public struct CSV {
       print("Header missing !")
       print(dataRows[0])
     }
-    print("\(url.absoluteString) loaded.")
     #endif
   }
 }
