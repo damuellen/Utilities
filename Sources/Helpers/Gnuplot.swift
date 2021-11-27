@@ -64,7 +64,11 @@ public final class Gnuplot: CustomStringConvertible {
     stdin.fileHandleForWriting.write(commands(terminal).data(using: .utf8)!)
     try stdin.fileHandleForWriting.close()
     let stdout = process.standardOutput as! Pipe
-    return try stdout.fileHandleForReading.readToEnd()
+    if #available(macOS 10.15.4, *) {
+      return try stdout.fileHandleForReading.readToEnd()
+    } else {
+      return stdout.fileHandleForReading.readDataToEndOfFile()
+    }
   }
   public func commands(_ terminal: Terminal? = nil) -> String {
     let config: String
