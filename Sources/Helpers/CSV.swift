@@ -78,7 +78,7 @@ public struct CSV {
     let hasCR = data[data.index(before: firstNewLine)] == cr
     let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
     let hasHeader = data[..<end].contains(where: isLetter)
-    let start = data ? data.index(after: firstNewLine) : data.startIndex
+    let start = hasHeader ? data.index(after: firstNewLine) : data.startIndex
     self.headerRow = !hasHeader ? nil : data[..<end].split(separator: separator).map { slice in
       String(decoding: slice.filter(isSpace), as: UTF8.self)
     }
