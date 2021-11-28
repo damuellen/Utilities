@@ -16,10 +16,10 @@ import WinSDK
 /// A representation of an HTML document.
 ///
 /// Call the `render()` method to turn it into a string.
-public struct HTML {
+public struct HTML: CustomStringConvertible {
   var data: Data { raw.data(using: .utf8)! }
   /// Creates an html string from the document
-  public func render() -> String { return raw }
+  public var description: String { return raw }
   /// Create a pdf file from the document.
   public func pdf(toFile name: String) throws {
     let html = URL.temporaryFile().appendingPathExtension("html")
