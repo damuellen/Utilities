@@ -119,17 +119,17 @@ public extension Array where Element == Double {
 
 private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
   var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
-  var r = [Double.zero]
-  var neg = false
-  var i = 0
+  var a = [Double]()
   while true {
+    var r = Double.zero
+    var neg = false
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
     if p.pointee == UInt8(ascii: "-") {
       neg = true
       p = p.successor()
     }
     while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
-      r[i] = Double(p.pointee - UInt8(ascii: "0")).addingProduct(r[i], 10)
+      r = Double(p.pointee - UInt8(ascii: "0")).addingProduct(r], 10)
       p = p.successor()
     }
     if p.pointee == UInt8(ascii: ".") {
@@ -142,18 +142,13 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
         n += 1
       }
       for _ in 0..<n { f /= 10 }
-      r[i] += f
+      r += f
     }
-    if neg { r[i] = -r[i] }
+    if neg { a.append(-r) } else { a.append(r) }
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
     if p.pointee == separator {
       p = p.successor()
-      r.append(Double.zero)
-      i += 1
-    } else {
-      break
-    }
+    } else { break }
   }
-  return r
+  return a
 }
-
