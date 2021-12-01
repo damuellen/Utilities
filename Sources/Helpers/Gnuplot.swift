@@ -79,18 +79,19 @@ public final class Gnuplot: CustomStringConvertible {
       return stdout.fileHandleForReading.readDataToEndOfFile()
     }
     #else
-    var data = Data()
+    let endOfData: Data
     if case .svg(let path) = terminal, path.isEmpty {
-      let end = "</svg>\n\n".data(using: .utf8)!
-      while data.suffix(end.count) != end {
-        data.append(stdout.fileHandleForReading.availableData)
-      }
+      endOfData = "</svg>\n\n".data(using: .utf8)!
+    } else if case .pdf(let path) = terminal, path.isEmpty {
+      endOfData = Data([37,37,69,79,70,10]) // %%EOF
+    } else if case .pngSmall(let path) = terminal, path.isEmpty {
+      endOfData = Data([73,69,78,68,174,66,96,130]) // IEND
+    } else {
+      return nil
     }
-    if case .pngSmall(let path) = terminal, path.isEmpty {
-      let end: [UInt8] = [73,69,78,68,174,66,96,130] // IEND
-      while data.suffix(end.count) != end {
-        data.append(stdout.fileHandleForReading.availableData)
-      }
+    var data = Data()
+    while data.suffix(endOfData.count) != endOfData {
+      data.append(stdout.fileHandleForReading.availableData)
     }
     return data
     #endif
