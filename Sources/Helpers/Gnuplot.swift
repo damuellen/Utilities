@@ -62,7 +62,7 @@ public final class Gnuplot: CustomStringConvertible {
     #endif
     gnuplot.standardInput = Pipe()
     gnuplot.standardOutput = Pipe()
-    
+    gnuplot.standardError = nil
     return gnuplot
   }
   /// Execute the plot commands.
