@@ -41,11 +41,20 @@ public final class Gnuplot: CustomStringConvertible {
     self.defaultPlot = "plot $data"
     self.settings = Gnuplot.settings(style)
   }
-
+  #if os(Windows) || os(Linux)
+  private static var running: Process?
+  #endif
   public static func process() -> Process {
+    #if os(Windows) || os(Linux)
+    if let process = Gnuplot.running { if process.isRunning { return process } }
     let gnuplot = Process()
+    gnuplot.arguments = ["--persist"]
+    Gnuplot.running = gnuplot
+    #else
+    let gnuplot = Process()
+    #endif
     #if os(Windows)
-    gnuplot.executableURL = URL(fileURLWithPath: "C:/bin/gnuplot.exe")
+    gnuplot.executableURL = .init(fileURLWithPath: "C:/bin/gnuplot.exe")
     #elseif os(Linux)
     gnuplot.executableURL = .init(fileURLWithPath: "/usr/bin/gnuplot")
     #else
@@ -53,22 +62,32 @@ public final class Gnuplot: CustomStringConvertible {
     #endif
     gnuplot.standardInput = Pipe()
     gnuplot.standardOutput = Pipe()
-    gnuplot.standardError = nil
+    
     return gnuplot
   }
   /// Execute the plot commands.
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
-    let process = Gnuplot.process()
-    try process.run()
-    let stdin = process.standardInput as! Pipe
+    let gnuplot = Gnuplot.process()
+    if !gnuplot.isRunning { try gnuplot.run() }
+    let stdin = gnuplot.standardInput as! Pipe
     stdin.fileHandleForWriting.write(commands(terminal).data(using: .utf8)!)
-    try stdin.fileHandleForWriting.close()
-    let stdout = process.standardOutput as! Pipe
+    let stdout = gnuplot.standardOutput as! Pipe
+    #if os(macOS)
     if #available(macOS 10.15.4, *) {
       return try stdout.fileHandleForReading.readToEnd()
     } else {
       return stdout.fileHandleForReading.readDataToEndOfFile()
     }
+    #else
+    var data = Data()
+    if case .svg(let path) = terminal, path.isEmpty {
+      let end = "</svg>\n\n".data(using: .utf8)!
+      while data.suffix(end.count) != end {
+        data.append(stdout.fileHandleForReading.availableData)
+      }
+    }
+    return data
+    #endif
   }
   public func commands(_ terminal: Terminal? = nil) -> String {
     let config: String
