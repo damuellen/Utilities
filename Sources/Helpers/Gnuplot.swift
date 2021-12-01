@@ -86,6 +86,12 @@ public final class Gnuplot: CustomStringConvertible {
         data.append(stdout.fileHandleForReading.availableData)
       }
     }
+    if case .pngSmall(let path) = terminal, path.isEmpty {
+      let end: [UInt8] = [73,69,78,68,174,66,96,130] // IEND
+      while data.suffix(end.count) != end {
+        data.append(stdout.fileHandleForReading.availableData)
+      }
+    }
     return data
     #endif
   }
