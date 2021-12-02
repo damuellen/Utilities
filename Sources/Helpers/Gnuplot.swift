@@ -41,13 +41,14 @@ public final class Gnuplot: CustomStringConvertible {
     self.defaultPlot = "plot $data"
     self.settings = Gnuplot.settings(style)
   }
-  #if os(Windows) || os(Linux)
+   #if os(Linux)
   private static var running: Process?
   #endif
   public static func process() -> Process {
-    #if os(Windows) || os(Linux)
+    #if os(Linux)
     if let process = Gnuplot.running { if process.isRunning { return process } }
     let gnuplot = Process()
+    gnuplot.executableURL = .init(fileURLWithPath: "/usr/bin/gnuplot")
     gnuplot.arguments = ["--persist"]
     Gnuplot.running = gnuplot
     #else
@@ -55,9 +56,7 @@ public final class Gnuplot: CustomStringConvertible {
     #endif
     #if os(Windows)
     gnuplot.executableURL = .init(fileURLWithPath: "C:/bin/gnuplot.exe")
-    #elseif os(Linux)
-    gnuplot.executableURL = .init(fileURLWithPath: "/usr/bin/gnuplot")
-    #else
+    #elseif os(macOS)
     gnuplot.executableURL = .init(fileURLWithPath: "/opt/homebrew/bin/gnuplot")
     #endif
     gnuplot.standardInput = Pipe()
@@ -72,13 +71,7 @@ public final class Gnuplot: CustomStringConvertible {
     let stdin = gnuplot.standardInput as! Pipe
     stdin.fileHandleForWriting.write(commands(terminal).data(using: .utf8)!)
     let stdout = gnuplot.standardOutput as! Pipe
-    #if os(macOS)
-    if #available(macOS 10.15.4, *) {
-      return try stdout.fileHandleForReading.readToEnd()
-    } else {
-      return stdout.fileHandleForReading.readDataToEndOfFile()
-    }
-    #else
+    #if os(Linux)
     let endOfData: Data
     if case .svg(let path) = terminal, path.isEmpty {
       endOfData = "</svg>\n\n".data(using: .utf8)!
@@ -94,6 +87,13 @@ public final class Gnuplot: CustomStringConvertible {
       data.append(stdout.fileHandleForReading.availableData)
     }
     return data
+    #else
+    try stdin.fileHandleForWriting.close()
+    if #available(macOS 10.15.4, *) {
+      return try stdout.fileHandleForReading.readToEnd()
+    } else {
+      return stdout.fileHandleForReading.readDataToEndOfFile()
+    }
     #endif
   }
   public func commands(_ terminal: Terminal? = nil) -> String {
