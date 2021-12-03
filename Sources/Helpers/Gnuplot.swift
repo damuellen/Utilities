@@ -313,7 +313,7 @@ public final class Gnuplot: CustomStringConvertible {
         #else
         let height = 710
         #endif
-        return ["term":"svg size 1000,\(height)\n", "output": path.isEmpty ? "" : "'\(path)'"]
+        return ["term":"svg size 1000,\(height)", "output": path.isEmpty ? "" : "'\(path)'"]
       case .pdf(let path): return ["term":"pdfcairo size 10,7.1 \(font)14'", "output": path.isEmpty ? "" : "'\(path)'"]
       case .png(let path): return ["term":"pngcairo size 1440, 900 \(font)12'", "output": path.isEmpty ? "" : "'\(path)'"]
       case .pngSmall(let path): return ["term":"pngcairo size 1024, 720 \(font)12'", "output": path.isEmpty ? "" : "'\(path)'"]
