@@ -404,8 +404,9 @@ extension HTTP {
       for header in headers { if header.lowercased().hasPrefix("content-length") { return } }
       self.headers.append("Content-Length: \(bodyData.count)")
     }
-    public init(responseCode: Int = 200, headers: [String] = [], html: HTML) {
-      self.init(responseCode: responseCode, headers: headers, bodyData: html.data)
+    public init(html: HTML) {
+      let headers = ["Content-Type: text/html; charset=utf-8"]
+      self.init(responseCode: 200, headers: headers, bodyData: html.data)
     }
     public init(response: ResponseCode, headers: [String] = [], bodyData: Data = Data()) { 
       self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData) 
