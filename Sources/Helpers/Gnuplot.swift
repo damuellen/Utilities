@@ -117,9 +117,9 @@ public final class Gnuplot: CustomStringConvertible {
         let (x,y) = (z.quotient, (multiplot / z.quotient))
         layout = (min(x,y), max(x,y) + (x > 1 && z.remainder > 0 ? 1 : 0))
       }
-      return datablock + config 
+      return datablock + config + "\n"
         + "set multiplot layout \(layout.rows),\(layout.cols) rowsfirst\n"
-        + "\n" + plot + "\nreset session\nunset multiplot\n"
+        + plot + "\nreset session\nunset multiplot\n"
     }
     return datablock + config + "\n" + plot + "\nreset session\n"
   }
