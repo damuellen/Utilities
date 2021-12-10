@@ -63,7 +63,7 @@ fileprivate class Parser: NSObject, XMLParserDelegate {
   func parse() {
     let parser = XMLParser(data: data)
     parser.delegate = self
-    parser.parse()
+    let _ = parser.parse()
   }
   func parser(
     _ parser: XMLParser,
