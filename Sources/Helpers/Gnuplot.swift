@@ -140,6 +140,18 @@ public final class Gnuplot: CustomStringConvertible {
     }
     return self
   }
+
+  @discardableResult public func plot(
+    index i: Int = 0, x: Int = 1, y: Int = 2, label: Int, rotate: Int = 45, offset: String = "3,1.5"
+  ) -> Self {
+    let command = "$data i \(i) u \(x):\(y):\(label) with labels tc ls 18 rotate by \(rotate) offset \(offset) notitle"
+    if let plot = userPlot {
+      userPlot = plot + ", " + command
+    } else {  
+      userPlot = "plot " + command
+    }
+    return self
+  }
   @discardableResult public func set(title: String) -> Self {
     settings["title"] = "'\(title)'"
     return self
@@ -168,7 +180,7 @@ public final class Gnuplot: CustomStringConvertible {
       ps = "ps 1.0"
     } else {
       lw = "lw 1.5"
-      ps = "ps 1.2"
+      ps = "ps 1.1"
     }
     let pt = Array(1...7).shuffled()
     let dict = [
