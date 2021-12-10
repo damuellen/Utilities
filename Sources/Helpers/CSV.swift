@@ -59,8 +59,8 @@ public struct CSV {
     }
   }
 
-  public init?(path: String, separator: Unicode.Scalar = ",") {
-    let url = URL(fileURLWithPath: path)
+  public init?(atPath: String, separator: Unicode.Scalar = ",") {
+    let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
     self.init(data: data, separator: separator)
@@ -118,6 +118,7 @@ public extension Array where Element == Double {
 }
 
 private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
+  let power = [1.0,1e1,1e2,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14]
   var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
   while true {
@@ -141,8 +142,7 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
         p = p.successor()
         n += 1
       }
-      for _ in 0..<n { f /= 10 }
-      r += f
+      r += f / power[n] // Here be dragons.
     }
     if neg { a.append(-r) } else { a.append(r) }
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
