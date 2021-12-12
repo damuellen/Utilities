@@ -59,11 +59,27 @@ public final class Gnuplot: CustomStringConvertible {
     #elseif os(macOS)
     gnuplot.executableURL = .init(fileURLWithPath: "/opt/homebrew/bin/gnuplot")
     #endif
+    #if !os(Windows)
     gnuplot.standardInput = Pipe()
+    #endif
     gnuplot.standardOutput = Pipe()
     gnuplot.standardError = nil
     return gnuplot
   }
+  #if os(Windows)
+  @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
+    let gnuplot = Gnuplot.process()
+    #if os(Windows)
+    let plot = URL.temporaryFile().appendingPathExtension("plot")
+    defer { try plot.removeItem() }
+    try commands(terminal).data(using: .utf8)!.write(to: plot)
+    gnuplot.arguments = [plot.path]
+    try gnuplot.run()
+    let stdout = gnuplot.standardOutput as! Pipe
+    return try stdout.fileHandleForReading.readToEnd()
+    #endif
+  }
+  #else
   /// Execute the plot commands.
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
     let gnuplot = Gnuplot.process()
@@ -96,6 +112,7 @@ public final class Gnuplot: CustomStringConvertible {
     }
     #endif
   }
+  #endif
   public func commands(_ terminal: Terminal? = nil) -> String {
     let config: String
     if let terminal = terminal {  
