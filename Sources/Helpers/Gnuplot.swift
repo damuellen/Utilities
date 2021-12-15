@@ -70,13 +70,14 @@ public final class Gnuplot: CustomStringConvertible {
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
     let gnuplot = Gnuplot.process()
     #if os(Windows)
-    let plot = URL.temporaryFile().appendingPathExtension("plot")
-    defer { try plot.removeItem() }
+    let plot = URL.temporaryFile().appendingPathExtension("plot")    
     try commands(terminal).data(using: .utf8)!.write(to: plot)
     gnuplot.arguments = [plot.path]
     try gnuplot.run()
     let stdout = gnuplot.standardOutput as! Pipe
-    return try stdout.fileHandleForReading.readToEnd()
+    let data = try stdout.fileHandleForReading.readToEnd()
+    try plot.removeItem()
+    return data
     #endif
   }
   #else
