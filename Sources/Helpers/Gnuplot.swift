@@ -69,7 +69,6 @@ public final class Gnuplot: CustomStringConvertible {
   #if os(Windows)
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
     let gnuplot = Gnuplot.process()
-    #if os(Windows)
     let plot = URL.temporaryFile().appendingPathExtension("plot")    
     try commands(terminal).data(using: .utf8)!.write(to: plot)
     gnuplot.arguments = [plot.path]
@@ -78,7 +77,6 @@ public final class Gnuplot: CustomStringConvertible {
     let data = try stdout.fileHandleForReading.readToEnd()
     try plot.removeItem()
     return data
-    #endif
   }
   #else
   /// Execute the plot commands.
