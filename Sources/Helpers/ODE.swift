@@ -210,7 +210,7 @@ extension SIMD16: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD32: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD64: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 
-#if os(macOS)
+#if os(macOS) || os(iOS)
 extension SIMD2: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD3: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD4: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
