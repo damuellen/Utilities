@@ -41,7 +41,7 @@ public final class Gnuplot: CustomStringConvertible {
     self.defaultPlot = "plot $data"
     self.settings = Gnuplot.settings(style)
   }
-   #if os(Linux)
+  #if os(Linux)
   private static var running: Process?
   #endif
   public static func process() -> Process {
