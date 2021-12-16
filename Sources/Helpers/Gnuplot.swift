@@ -46,7 +46,7 @@ public final class Gnuplot: CustomStringConvertible {
   #endif
   #if os(iOS)
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
-    data(using: .utf8)!.write(to: plot)    
+    commands(terminal).data(using: .utf8)
   }
   #else
   public static func process() -> Process {
