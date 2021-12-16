@@ -21,7 +21,7 @@ public struct HTML: CustomStringConvertible {
   /// Creates an html string from the document
   public var description: String { return raw }
   /// Create a pdf file from the document.
-    #if !os(iOS)
+  #if !os(iOS)
   public func pdf(toFile name: String) throws {
     let html = URL.temporaryFile().appendingPathExtension("html")
     try data.write(to: html)
