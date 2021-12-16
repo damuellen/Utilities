@@ -405,8 +405,13 @@ extension HTTP {
       self.headers.append("Content-Length: \(bodyData.count)")
     }
     public init(html: HTML) {
-      let headers = ["Content-Type: text/html; charset=utf-8"]
-      self.init(responseCode: 200, headers: headers, bodyData: html.data)
+      let headers = ["Content-Type: text/html; charset=utf-8", "Content-Encoding: gzip"]
+      #if !os(iOS)
+      let bodyData = html.data.gzipped()
+      #else 
+      let bodyData = html.data
+      #endif
+      self.init(responseCode: 200, headers: headers, bodyData: bodyData)
     }
     public init(response: ResponseCode, headers: [String] = [], bodyData: Data = Data()) { 
       self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData) 
