@@ -147,7 +147,10 @@ public struct HTML: CustomStringConvertible {
   
   private let style = """
     <style media="print">
-      svg { font-family: sans-serif; font-size: 16px;}
+      svg { 
+        font-family: sans-serif; font-size: 16px; 
+        max-width: 28.0cm; max-height: 17.5cm; margin: -0.2cm;
+      }
       button { display: none; }
     </style>
     <style media="screen">
