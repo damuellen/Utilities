@@ -32,7 +32,7 @@ public final class XML {
     self.addAttributes(attributes)
   }
   public convenience init(atPath: String) throws {
-    let data = try Data(contentsOf: atPath)
+    let data = try Data(contentsOf: URL(fileURLWithPath: atPath))
     let parser = Parser(data: data)
     parser.parse()
     guard let xml = parser.root else { throw XMLParseError.unexpectedError }
