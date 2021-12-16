@@ -48,16 +48,16 @@ public final class Gnuplot: CustomStringConvertible {
     #if os(Linux)
     if let process = Gnuplot.running { if process.isRunning { return process } }
     let gnuplot = Process()
-    gnuplot.executableURL = .init(fileURLWithPath: "/usr/bin/gnuplot")
+    gnuplot.executableURL = "/usr/bin/gnuplot"
     gnuplot.arguments = ["--persist"]
     Gnuplot.running = gnuplot
     #else
     let gnuplot = Process()
     #endif
     #if os(Windows)
-    gnuplot.executableURL = .init(fileURLWithPath: "C:/bin/gnuplot.exe")
+    gnuplot.executableURL = "C:/bin/gnuplot.exe"
     #elseif os(macOS)
-    gnuplot.executableURL = .init(fileURLWithPath: "/opt/homebrew/bin/gnuplot")
+    gnuplot.executableURL = "/opt/homebrew/bin/gnuplot"
     #endif
     #if !os(Windows)
     gnuplot.standardInput = Pipe()
