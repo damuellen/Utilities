@@ -13,7 +13,7 @@ import Foundation
 #if os(Windows)
 import WinSDK
 import Cminizip
-#else
+#elseif os(Linux) || os(macOS)
 import CZLib
 #endif
 
