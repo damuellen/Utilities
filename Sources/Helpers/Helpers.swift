@@ -12,9 +12,6 @@ import Foundation
 
 #if os(Windows)
 import WinSDK
-import Cminizip
-#elseif os(Linux) || os(macOS)
-import CZLib
 #endif
 
 private var cachedWidth: Int?
@@ -234,7 +231,9 @@ extension Comparable {
   let index = (values.endIndex - 1) / 2
   if values.count.isMultiple(of: 2) { return _mean(values[index], values[index + 1]) } else { return values[index] }
 }
-#if os(Linux) || os(macOS)
+#if os(Linux)
+import CZLib
+
 extension Data {
   /// Whether the receiver is compressed in gzip format.
   public var isGzipped: Bool { self.starts(with: [0x1f, 0x8b]) }
