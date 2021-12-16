@@ -405,7 +405,7 @@ extension HTTP {
       self.headers.append("Content-Length: \(bodyData.count)")
     }
     public init(html: HTML) {
-      #if !os(iOS)
+      #if os(Linux) || os(macOS)
       let headers = ["Content-Type: text/html; charset=utf-8", "Content-Encoding: gzip"]
       let bodyData = html.data.gzipped()
       #else 
