@@ -61,10 +61,9 @@ extension FileManager {
   }
 }
 
-extension URL {
-  var windowsPath: String {
-    path.replacingOccurrences(of: "/", with: "\\")
-  }
+extension URL: ExpressibleByStringLiteral {
+  public init(stringLiteral value: String) { self.init(fileURLWithPath: value) }
+  var windowsPath: String { path.replacingOccurrences(of: "/", with: "\\") }
 
   static public func temporaryFile() -> URL {
     let fm = FileManager.default
