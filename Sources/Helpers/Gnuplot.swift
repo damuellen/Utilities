@@ -44,6 +44,11 @@ public final class Gnuplot: CustomStringConvertible {
   #if os(Linux)
   private static var running: Process?
   #endif
+  #if os(iOS)
+  @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
+    data(using: .utf8)!.write(to: plot)    
+  }
+  #else
   public static func process() -> Process {
     #if os(Linux)
     if let process = Gnuplot.running { if process.isRunning { return process } }
@@ -66,6 +71,7 @@ public final class Gnuplot: CustomStringConvertible {
     gnuplot.standardError = nil
     return gnuplot
   }
+  #endif
   #if os(Windows)
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
     let gnuplot = Gnuplot.process()
@@ -78,7 +84,7 @@ public final class Gnuplot: CustomStringConvertible {
     try plot.removeItem()
     return data
   }
-  #else
+  #elseif !os(iOS)
   /// Execute the plot commands.
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
     let gnuplot = Gnuplot.process()
