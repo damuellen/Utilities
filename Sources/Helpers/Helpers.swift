@@ -43,10 +43,7 @@ public func start(_ command: String) {
 #if os(Windows)
   let _ = ShellExecuteW(nil, "open".wide, command.wide, nil, nil, 8) 
 #elseif os(macOS)
-  do { try Process.run(
-    URL(fileURLWithPath: "/usr/bin/open"),
-    arguments: [command]
-  ) } catch {}
+  do { try Process.run("/usr/bin/open", arguments: [command]) } catch {}
 #endif
 }
 
