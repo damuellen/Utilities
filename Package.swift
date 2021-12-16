@@ -20,7 +20,3 @@ let package = Package(
       .product(name: "Numerics", package: "swift-numerics")])
   ]
 )
-
-#if os(Windows) || os(iOS)
-package.targets.removeAll(where: { $0.name == "CZLib" })
-#endif
