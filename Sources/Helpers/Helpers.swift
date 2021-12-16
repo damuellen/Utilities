@@ -234,7 +234,7 @@ extension Comparable {
   let index = (values.endIndex - 1) / 2
   if values.count.isMultiple(of: 2) { return _mean(values[index], values[index + 1]) } else { return values[index] }
 }
-#if !os(iOS)
+#if os(Linux) || os(macOS)
 extension Data {
   /// Whether the receiver is compressed in gzip format.
   public var isGzipped: Bool { self.starts(with: [0x1f, 0x8b]) }
