@@ -25,4 +25,6 @@ let package = Package(
 #if os(Windows)
 package.targets.removeAll(where: { $0.name == "CZLib" })
 package.products.first!.linkerSettings = [.linkedLibrary("zlibstatic.lib")]
+#elseif os(iOS)
+package.targets.removeAll(where: { $0.name == "CZLib" })
 #endif
