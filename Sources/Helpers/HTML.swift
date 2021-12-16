@@ -21,6 +21,7 @@ public struct HTML: CustomStringConvertible {
   /// Creates an html string from the document
   public var description: String { return raw }
   /// Create a pdf file from the document.
+    #if !os(iOS)
   public func pdf(toFile name: String) throws {
     let html = URL.temporaryFile().appendingPathExtension("html")
     try data.write(to: html)
@@ -31,15 +32,16 @@ public struct HTML: CustomStringConvertible {
       "-L", "0", "-R", "0", "-T", "0", "-B", "0",
       "-O", "Landscape", "--dpi", "600", path, name
     ]
-#if os(Windows)
-    wkhtmltopdf.executableURL = .init(fileURLWithPath: "C:/bin/wkhtmltopdf.exe")
-#else
-    wkhtmltopdf.executableURL = .init(fileURLWithPath: "/usr/local/bin/wkhtmltopdf")
-#endif
+    #if os(Windows)
+    wkhtmltopdf.executableURL = "C:/bin/wkhtmltopdf.exe"
+    #else
+    wkhtmltopdf.executableURL = "/usr/local/bin/wkhtmltopdf"
+    #endif
     try wkhtmltopdf.run()
     wkhtmltopdf.waitUntilExit()
     try html.removeItem()
   }
+  #endif
   /// Creates an HTML document with the given body.
   public init(body: String? = nil, refresh: Int = 0) {
     self.bodyContent = body ?? [lazySVG, coffeeSVG, sleepSVG].randomElement()!
