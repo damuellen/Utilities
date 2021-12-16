@@ -17,14 +17,10 @@ let package = Package(
     .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
     .target(name: "Helpers", dependencies: ["Libc", 
       .byName(name: "CZLib", condition: .when(platforms: [.macOS, .linux])),
-      .product(name: "Cminizip", package: "xlsxwriter.swift", condition: .when(platforms: [.windows])),
       .product(name: "Numerics", package: "swift-numerics")])
   ]
 )
 
-#if os(Windows)
-package.targets.removeAll(where: { $0.name == "CZLib" })
-package.products.first!.linkerSettings = [.linkedLibrary("zlibstatic.lib")]
-#elseif os(iOS)
+#if os(Windows) || os(iOS)
 package.targets.removeAll(where: { $0.name == "CZLib" })
 #endif
