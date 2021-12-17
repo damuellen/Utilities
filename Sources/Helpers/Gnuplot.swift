@@ -25,12 +25,9 @@ public final class Gnuplot: CustomStringConvertible {
     var last = UInt8(0)
     do { 
       guard let data = try self(.svg(path: "")) else { return nil }
-      let svg = data.drop(while: {
-        if last == UInt8(ascii: ">") { return false }
-        last = $0
-        return true
-      })
-      return String(decoding: svg, as: Unicode.UTF8.self)
+      let svg = data.dropFirst(270)
+      return #"<svg width="1025" height="\#(height)" viewBox="0 0 1025 \#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"# 
+      + String(decoding: svg, as: Unicode.UTF8.self)
     } catch { 
       print(error)
       return nil 
@@ -339,15 +336,7 @@ public final class Gnuplot: CustomStringConvertible {
       let font = "enhanced font ',"
       #endif
       switch self {
-      case .svg(let path):
-        #if os(Windows)
-        let height = 600
-        #elseif os(Linux)
-        let height = 750
-        #else
-        let height = 710
-        #endif
-        return ["term":"svg size 1000,\(height)", "output": path.isEmpty ? "" : "'\(path)'"]
+      case .svg(let path): return ["term":"svg size 1000,\(height)", "output": path.isEmpty ? "" : "'\(path)'"]
       case .pdf(let path): return ["term":"pdfcairo size 10,7.1 \(font)14'", "output": path.isEmpty ? "" : "'\(path)'"]
       case .png(let path): return ["term":"pngcairo size 1440, 900 \(font)12'", "output": path.isEmpty ? "" : "'\(path)'"]
       case .pngSmall(let path): return ["term":"pngcairo size 1024, 720 \(font)12'", "output": path.isEmpty ? "" : "'\(path)'"]
@@ -362,7 +351,13 @@ public final class Gnuplot: CustomStringConvertible {
   private let PDF = ["border 31 lw 1 lc rgb 'black'", "grid ls 18"]
   private let PNG = ["object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"]
 }
-
+#if os(Windows)
+fileprivate let height = 600
+#elseif os(Linux)
+fileprivate let height = 750
+#else
+fileprivate let height = 710
+#endif
 
 private func separated<T: FloatingPoint>(_ xys: [[T]]) -> String { xys.map { xy in xy.map { "\($0)" }.joined(separator: " ") }.joined(separator: "\n") }
 private func separated<T: FloatingPoint>(_ xys: [[T]], labels: [String]) -> String { 
