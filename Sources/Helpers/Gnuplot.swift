@@ -22,7 +22,6 @@ public final class Gnuplot: CustomStringConvertible {
   }
   #endif
   public var svg: String? {
-    var last = UInt8(0)
     do { 
       guard let data = try self(.svg(path: "")) else { return nil }
       let svg = data.dropFirst(270)
