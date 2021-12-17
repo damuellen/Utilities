@@ -164,7 +164,7 @@ public struct HTML: CustomStringConvertible {
         font-family: sans-serif;
         font-size: 16px;
       }
-      tspan { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+      tspan { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
       body { background-color: rgb(247,247,247); overflow: hidden; }
       @media (prefers-color-scheme: dark) {
         svg { filter: drop-shadow(3px 3px 3px rgb(255, 255, 255)); }
