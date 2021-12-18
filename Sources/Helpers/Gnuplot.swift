@@ -25,7 +25,7 @@ public final class Gnuplot: CustomStringConvertible {
     do { 
       guard let data = try self(.svg(path: "")) else { return nil }
       let svg = data.dropFirst(270)
-      return #"<svg width="1025" height="\#(height)" viewBox="0 0 1025 \#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"# 
+      return #"<svg width="\#(width+25)" height="\#(height)" viewBox="0 0 \#(width+25) \#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
       + String(decoding: svg, as: Unicode.UTF8.self)
     } catch { 
       print(error)
@@ -335,7 +335,7 @@ public final class Gnuplot: CustomStringConvertible {
       let font = "enhanced font ',"
       #endif
       switch self {
-      case .svg(let path): return ["term":"svg size 1000,\(height)", "output": path.isEmpty ? "" : "'\(path)'"]
+      case .svg(let path): return ["term":"svg size \(width),\(height)", "output": path.isEmpty ? "" : "'\(path)'"]
       case .pdf(let path): return ["term":"pdfcairo size 10,7.1 \(font)14'", "output": path.isEmpty ? "" : "'\(path)'"]
       case .png(let path): return ["term":"pngcairo size 1440, 900 \(font)12'", "output": path.isEmpty ? "" : "'\(path)'"]
       case .pngSmall(let path): return ["term":"pngcairo size 1024, 720 \(font)12'", "output": path.isEmpty ? "" : "'\(path)'"]
@@ -351,11 +351,14 @@ public final class Gnuplot: CustomStringConvertible {
   private let PNG = ["object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"]
 }
 #if os(Windows)
-fileprivate let height = 600
+fileprivate let height = 720
+fileprivate let width = 1255
 #elseif os(Linux)
 fileprivate let height = 750
+fileprivate let width = 1000
 #else
-fileprivate let height = 710
+fileprivate let height = 900
+fileprivate let width = 1415
 #endif
 
 private func separated<T: FloatingPoint>(_ xys: [[T]]) -> String { xys.map { xy in xy.map { "\($0)" }.joined(separator: " ") }.joined(separator: "\n") }
