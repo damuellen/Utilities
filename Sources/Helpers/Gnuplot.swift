@@ -197,7 +197,7 @@ public final class Gnuplot: CustomStringConvertible {
       lw = "lw 1.5"
       ps = "ps 1.0"
     } else {
-      lw = "lw 1.2"
+      lw = "lw 1.5"
       ps = "ps 1.0"
     }
     let pt = Array(1...7).shuffled()
@@ -357,8 +357,8 @@ fileprivate let width = 1255
 fileprivate let height = 750
 fileprivate let width = 1000
 #else
-fileprivate let height = 900
-fileprivate let width = 1415
+fileprivate let height = 800
+fileprivate let width = 1255
 #endif
 
 private func separated<T: FloatingPoint>(_ xys: [[T]]) -> String { xys.map { xy in xy.map { "\($0)" }.joined(separator: " ") }.joined(separator: "\n") }
