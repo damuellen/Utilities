@@ -194,11 +194,11 @@ public final class Gnuplot: CustomStringConvertible {
     let lw: String
     let ps: String
     if case .points = style {
-      lw = "lw 2"
+      lw = "lw 1.5"
       ps = "ps 1.0"
     } else {
-      lw = "lw 1.5"
-      ps = "ps 1.1"
+      lw = "lw 1.2"
+      ps = "ps 1.0"
     }
     let pt = Array(1...7).shuffled()
     let dict = [
