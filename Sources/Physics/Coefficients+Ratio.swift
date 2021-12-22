@@ -71,85 +71,93 @@ extension Polynomial: CustomStringConvertible {
 }
 
 extension Polynomial {
-  public static func fit(x: [Double], y: [Double], degree n: Int = 5) -> Polynomial {
-    /// degree of polynomial to fit the data
-    var n: Int = n
-    /// no. of data points
-    let N: Int = min(x.count, y.count)
+  public static func fit(x dependentValues: [Double], y independentValues: [Double], order: Int = 4) throws -> Polynomial? {
+    // https://github.com/OrbitalCalculations/hpnaff/blob/fdc8f01372b7632d8571b049a29d5b64c8fb1aee/Sources/hpNaff/Polynomial.swift#L98
+    var B = [Double](repeating: 0.0, count: order + 1)
+    var P = [Double](repeating: 0.0, count: ((order+1) * 2)+1)
+    var A = [Double](repeating: 0.0, count: (order + 1)*2*(order + 1))
+    var coefficients = [Double](repeating: 0.0, count: order + 1)
 
-    var X: [Double] = Array(repeating: 0.0, count: 2 * n + 1)
+    // Verify initial conditions....
+    // This method requires that the countOfElements >
+    // (order+1)
 
-    for i in X.indices {
-      for j in 0..<N {
-        // consecutive positions of the array will store N,sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
-        X[i] += pow(x[j], Double(i))  
+    let countOfElements = dependentValues.count
+    guard (countOfElements > order) else { return nil }
+
+    // This method has imposed an arbitrary bound of
+    // order <= maxOrder.  Increase maxOrder if necessary.
+    let maxOrder = 6
+    guard (order <= maxOrder) else { return nil }
+    
+    // Identify the column vector
+    for ii in 0..<countOfElements {
+      let x = dependentValues[ii]
+      let y = independentValues[ii]
+      var powx = 1.0
+
+      for jj in 0..<(order + 1) {
+        B[jj] = B[jj] + (y * powx)
+        powx *= x
       }
     }
-    var a: [Double] = Array(repeating: 0, count: n + 1)
-    /// B is the Normal matrix(augmented) that will store the equations, 'a' is for value of the final coefficients
-    var B: [[Double]] = Array(repeating: Array(repeating: 0, count: n + 2), count: n + 1)
+    // Initialize the PowX array
+    P[0] = Double(countOfElements)
 
-    for i in 0...n {
-      for j in 0...n {
-        // Build the Normal matrix by storing the corresponding coefficients at the right positions except the last column of the matrix
-        B[i][j] = X[i + j]
+    // Compute the sum of the Powers of X
+    for ii in 0..<countOfElements {
+      let x    = dependentValues[ii]
+      var powx = dependentValues[ii]
+
+      for jj in 1 ..< ((2 * (order + 1)) + 1) {
+            P[jj] = P[jj] + powx
+            powx  *= x
+        }
+    }
+
+    // Initialize the reduction matrix
+    //
+    for ii in 0..<(order + 1) {
+      for jj in 0..<(order + 1) {
+        A[(ii * (2 * (order + 1))) + jj] = P[ii+jj];
       }
+      A[(ii*(2 * (order + 1))) + (ii + (order + 1))] = 1.0
     }
 
-    /// Array to store the values of sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
-    var Y: [Double] = Array(repeating: 0, count: n + 1)
-
-    for i in 0..<(n + 1) {
-      Y[i] = 0
-      for j in 0..<N {
-        // consecutive positions will store sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
-        Y[i] += pow(x[j], Double(i)) * y[j]
-      }
-    }
-
-    for i in 0...n {
-      // load the values of Y as the last column of B(Normal Matrix but augmented)
-      B[i][n + 1] = Y[i]
-    }
-
-    n += 1
-    for i in 0..<n {  
-      // From now Gaussian Elimination starts(can be ignored) to solve the set of linear equations (Pivotisation)
-      for k in (i + 1)..<n {
-        if B[i][i] < B[k][i] {
-          for j in 0...n {
-            let temp = B[i][j]
-            B[i][j] = B[k][j]
-            B[k][j] = temp
+    // Move the Identity matrix portion of the redux matrix
+    // to the left side (find the inverse of the left side
+    // of the redux matrix
+    for ii in 0..<(order + 1) {
+      let x = A[(ii * (2 * (order + 1))) + ii]
+      if (x != 0.0) {
+        for kk in 0..<(2 * (order + 1)) {
+          A[(ii * (2 * (order + 1))) + kk] =
+                    A[(ii * (2 * (order + 1))) + kk] / x
+        }
+        for jj  in 0..<(order + 1) {
+          if ((jj - ii) != 0) {
+            let y = A[(jj * (2 * (order + 1))) + ii]
+            for kk in 0..<(2 * (order + 1)) {
+              A[(jj * (2 * (order + 1))) + kk] =
+                  A[(jj * (2 * (order + 1))) + kk] -
+                  y * A[(ii * (2 * (order + 1))) + kk]
+            }
           }
         }
+      } else {
+        return nil
       }
     }
 
-    for i in 0..<(n - 1) {  // loop to perform the gauss elimination
-      for k in (i + 1)..<n {
-        let t = B[k][i] / B[i][i]
-        for j in 0...n {
-          // make the elements below the pivot elements equal to zero or elimnate the variables
-          B[k][j] -= t * B[i][j]
-        }
+    // Calculate and Identify the coefficients
+    for ii in 0..<(order + 1) {
+      var x = 0.0
+      for kk in 0..<(order + 1) {
+        x += (A[(ii * (2 * (order + 1))) + (kk + (order + 1))] * B[kk])
       }
+      coefficients[ii] = x
     }
-
-    for i in (0..<(n - 1)).reversed() { // back-substitution
-      // x is an array whose values correspond to the values of x,y,z..
-      // make the variable to be calculated equal to the rhs of the last equation
-      a[i] = B[i][n]
-      for j in 0..<n {
-        if j != i {
-          // then subtract all the lhs values except the coefficient of the variable whose value is being calculated
-          a[i] -= B[i][j] * a[j]
-        }
-      }
-      a[i] /= B[i][i] // now finally divide the rhs by the coefficient of the variable to be calculated
-    }
-    a.removeLast()
-    return self.init(a)
+    return self.init(coefficients)
   }
 }
 
