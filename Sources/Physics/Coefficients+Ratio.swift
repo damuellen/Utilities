@@ -72,7 +72,7 @@ extension Polynomial: CustomStringConvertible {
 
 extension Polynomial {
   // https://github.com/OrbitalCalculations/hpnaff/blob/fdc8f01372b7632d8571b049a29d5b64c8fb1aee/Sources/hpNaff/Polynomial.swift#L98
-  public static func fit<S: Collection>(x dependentValues: S, y independentValues: S, order: Int)-> Polynomial? where S.Element == Double {
+  public static func fit<S: Collection>(x dependentValues: S, y independentValues: S, order: Int = 4) -> Polynomial? where S.Element == Double {
     let dependentValues = Array(dependentValues)
     let independentValues = Array(independentValues)
     var B = [Double](repeating: 0.0, count: order + 1)
