@@ -19,7 +19,7 @@ public struct CSV {
 
   public var csv: String { peek(dataRows.indices) }
 
-  public var head: String { peek(0..<30) }
+  public var head: String { peek(0..<min(30, dataRows.endIndex)) }
 
   public var tail: String { 
     if dataRows.count > 30 {
