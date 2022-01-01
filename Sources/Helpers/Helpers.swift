@@ -37,7 +37,7 @@ public func terminalWidth() -> Int {
     if ioctl(1, UInt(TIOCGWINSZ), &ws) == 0 { cachedTerminalWidth = Int(ws.ws_col) - 1 }
   }
   #endif
-  if cachedTerminalWidth < 0 { cachedTerminalWidth = 80 }
+  if cachedTerminalWidth < 0 { cachedTerminalWidth = 120 }
   return cachedTerminalWidth
 }
 
