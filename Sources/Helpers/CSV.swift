@@ -115,7 +115,7 @@ public extension Array where Element == Double {
   static func formatted(_ array: ArraySlice<[Double]>) -> String {
     let m = Int(array.map(\.largest).reduce(0, { Swift.max($0, $1) })).description.count
     return array.map { row in
-      row.map { String(format: "%\(m)f", $0) }.joined(separator: ",")
+      row.map { String(format: "%\(m).f", $0) }.joined(separator: ",")
     }.joined(separator: "\n")
   }
 }
