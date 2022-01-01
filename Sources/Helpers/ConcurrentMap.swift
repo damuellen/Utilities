@@ -9,6 +9,7 @@
 //
 
 import Dispatch
+import Foundation
 
 extension RandomAccessCollection {
   /// Returns `self.map(transform)`, computed in parallel.
