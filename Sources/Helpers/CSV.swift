@@ -90,7 +90,7 @@ public struct CSV {
     }
     #endif
     self.dataRows = data[start...].withUnsafeBytes { content in
-      content.split(separator: newLine).concurrentMap(minBatchSize: 1000) { line in
+      content.split(separator: newLine).concurrentMap { line in
         let line = hasCR ? line.dropLast() : line
         let buffer = UnsafeRawBufferPointer(rebasing: line)
         return parse(buffer, separator: separator)
