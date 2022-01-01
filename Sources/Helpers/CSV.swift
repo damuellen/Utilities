@@ -113,7 +113,7 @@ public extension Array where Element == Double {
 }
 
 public extension Array where Element == Double {
-  static func formatted(_ array: ArraySlice<[Double]> minWidth: Int = 1) -> String {
+  static func formatted(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> String {
     let m = Int(array.map(\.largest).reduce(minWidth, { Swift.max($0, $1) })).description.count
     return array.map { row in
       row.map { String(format: "%\(m).f", $0) }.joined(separator: " | ")
