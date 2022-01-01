@@ -9,16 +9,17 @@
 //
 
 import Dispatch
+import Foundation
 
 extension RandomAccessCollection {
   /// Returns `self.map(transform)`, computed in parallel.
   @inlinable
-  public func concurrentMap<E>(minBatchSize: Int = 8760, _ transform: (Element) -> E)
-    -> [E]
+  public func concurrentMap<E>(_ transform: (Element) -> E)
+  -> [E]
   {
     let n = self.count
-    let batchCount = (n + minBatchSize - 1) / minBatchSize
-    if batchCount < 2 { return self.map(transform) }
+    let batchCount = ProcessInfo().activeProcessorCount * 4
+    if batchCount > n { return self.map(transform) }
     return Array(unsafeUninitializedCapacity: n) {
       uninitializedMemory, resultCount in resultCount = n
       let baseAddress = uninitializedMemory.baseAddress!
@@ -26,7 +27,7 @@ extension RandomAccessCollection {
         let startOffset = b * n / batchCount
         let endOffset = (b + 1) * n / batchCount
         var sourceIndex = index(self.startIndex, offsetBy: startOffset)
-        for p in baseAddress + startOffset..<baseAddress + endOffset {
+        for p in baseAddress + startOffset ..< baseAddress + endOffset {
           p.initialize(to: transform(self[sourceIndex]))
           formIndex(after: &sourceIndex)
         }
