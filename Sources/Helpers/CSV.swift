@@ -31,10 +31,11 @@ public struct CSV {
   public func peek(_ range: Array.Indices) -> String {
     if let headerRow = headerRow {
       let w = headerRow.map(\.count).max() ?? 1
-      return headerRow.joined(separator: " | ") + "\n" 
-       + Array.formatted(dataRows[range], minWidth: w)
+      let formatted = Array.formatted(dataRows[range], minWidth: w)
+      return headerRow.map { $0.leftpad(length: formatted.1) }
+        .joined(separator: " ") + "\n" + formatted.0
     }
-    return Array.formatted(dataRows[range])
+    return Array.formatted(dataRows[range]).0
   }
 
   public subscript(row: Int) -> [Double] {
@@ -113,11 +114,11 @@ public extension Array where Element == Double {
 }
 
 public extension Array where Element == Double {
-  static func formatted(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> String {
-    let m = Int(array.map(\.largest).reduce(minWidth, { Swift.max($0, $1) })).description.count
-    return array.map { row in
-      row.map { String(format: "%\(m).f", $0) }.joined(separator: " | ")
-    }.joined(separator: "\n")
+  static func formatted(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
+    let m = Int(array.map(\.largest).reduce(Double(minWidth), { Swift.max($0, $1) })).description.count
+    return (array.map { row in
+      row.map { String(format: "%\(m).f", $0) }.joined(separator: " ")
+    }.joined(separator: "\n"), m)
   }
 }
 
