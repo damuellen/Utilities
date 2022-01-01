@@ -17,7 +17,7 @@ extension RandomAccessCollection {
   -> [E]
   {
     let n = self.count
-    let batchCount = n / 16
+    let batchCount = ProcessInfo.processInfo.activeProcessorCount * 4
     if batchCount > n { return self.map(transform) }
     return Array(unsafeUninitializedCapacity: n) {
       uninitializedMemory, resultCount in resultCount = n
