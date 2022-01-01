@@ -14,27 +14,31 @@ import Foundation
 import WinSDK
 #endif
 
-private var cachedWidth: Int?
+private var cachedTerminalWidth: Int = 0
 public func terminalWidth() -> Int {
-  if let width = cachedWidth { return width }
+  if cachedTerminalWidth > 0 { return cachedTerminalWidth }
   #if os(Windows)
   var csbi: CONSOLE_SCREEN_BUFFER_INFO = CONSOLE_SCREEN_BUFFER_INFO()
-  if !GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi) { return 80 }
-  let width = Int(csbi.srWindow.Right - csbi.srWindow.Left)
-  cachedWidth = width
+  if GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi) { 
+    let width = Int(csbi.srWindow.Right - csbi.srWindow.Left)
+    cachedWidth = width
+  } else {
+    cachedTerminalWidth = 80 
+  }
   return width
   #elseif os(iOS)
-  return 80
+    cachedTerminalWidth = 80 
   #else
-  // Try to get from environment.
+  // First try to get from environment.
   if let columns = ProcessInfo.processInfo.environment["COLUMNS"], let width = Int(columns) {
-    cachedWidth = width
-    return width
+    cachedTerminalWidth = width
+  } else {
+    var ws = winsize()
+    if ioctl(1, UInt(TIOCGWINSZ), &ws) == 0 { cachedTerminalWidth = Int(ws.ws_col) - 1 }
   }
-  var ws = winsize()
-  if ioctl(1, UInt(TIOCGWINSZ), &ws) == 0 { return Int(ws.ws_col) - 1 }
-  return 80
   #endif
+  if cachedTerminalWidth < 0 { cachedTerminalWidth = 80 }
+  return cachedTerminalWidth
 }
 
 public func start(_ command: String) {
