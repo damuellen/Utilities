@@ -30,7 +30,7 @@ public struct CSV {
 
   public func peek(_ range: Array.Indices) -> String {
     if let headerRow = headerRow {
-      return headerRow.joined(separator: ", ") + "\n" 
+      return headerRow.joined(separator: " | ") + "\n" 
        + Array.formatted(dataRows[range])
     }
     return Array.formatted(dataRows[range])
@@ -107,15 +107,16 @@ public struct CSV {
 
 public extension Array where Element == Double {
   var formatted: String {
-    self.map(\.description).joined(separator: ",")
+    self.map(\.description).joined(separator: ", ")
   }
 }
 
 public extension Array where Element == Double {
   static func formatted(_ array: ArraySlice<[Double]>) -> String {
-    let m = Int(array.map(\.largest).reduce(0, { Swift.max($0, $1) })).description.count
+    let c = headerRow?.map(\.count).max() ?? 0
+    let m = Int(array.map(\.largest).reduce(c, { Swift.max($0, $1) })).description.count
     return array.map { row in
-      row.map { String(format: "%\(m).f", $0) }.joined(separator: ",")
+      row.map { String(format: "%\(m).f", $0) }.joined(separator: " | ")
     }.joined(separator: "\n")
   }
 }
