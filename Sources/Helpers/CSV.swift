@@ -119,7 +119,7 @@ public extension Array where Element == Double {
     let m = Int(array.map(\.largest).reduce(Double(minWidth), { Swift.max($0, $1) })).description.count
     let width = (terminalWidth() / minWidth+1) * minWidth+1
     return (array.map { row in
-      String(row.map { String(format: "%.1f", $0).leftpad(length: m) }.joined(separator: " ").prefix(width))
+      String(row.map { String(format: "%.1f", $0).leftpad(length: m+2) }.joined(separator: " ").prefix(width))
     }.joined(separator: "\n"), m+2)
   }
 }
