@@ -32,8 +32,8 @@ public struct CSV {
     if let headerRow = headerRow {
       let w = headerRow.map(\.count).max() ?? 1
       let formatted = Array.justified(dataRows[range], minWidth: w)
-      return headerRow.map { $0.leftpad(length: formatted.1) }
-        .joined(separator: " ") + "\n" + formatted.0
+      return String(headerRow.map { $0.leftpad(length: formatted.1) }
+        .joined(separator: " ").prefix(terminalWidth())) + "\n" + formatted.0
     }
     return Array.justified(dataRows[range]).0
   }
@@ -117,7 +117,7 @@ public extension Array where Element == Double {
   static func justified(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
     let m = Int(array.map(\.largest).reduce(Double(minWidth), { Swift.max($0, $1) })).description.count
     return (array.map { row in
-      row.map { String(format: "%\(m).f", $0) }.joined(separator: " ")
+      String(row.map { String(format: "%\(m).f", $0) }.joined(separator: " ").prefix(terminalWidth()))
     }.joined(separator: "\n"), m)
   }
 }
