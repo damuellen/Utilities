@@ -9,7 +9,6 @@
 //
 
 import Dispatch
-import Foundation
 
 extension RandomAccessCollection {
   /// Returns `self.map(transform)`, computed in parallel.
@@ -18,7 +17,7 @@ extension RandomAccessCollection {
   -> [E]
   {
     let n = self.count
-    let batchCount = ProcessInfo().activeProcessorCount * 4
+    let batchCount = n / 16
     if batchCount > n { return self.map(transform) }
     return Array(unsafeUninitializedCapacity: n) {
       uninitializedMemory, resultCount in resultCount = n
