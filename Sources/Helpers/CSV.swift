@@ -107,14 +107,21 @@ public struct CSV {
 
 public extension Array where Element == Double {
   var formatted: String {
-    self.map(\.description).joined(separator: ", ")
+    self.map(\.description).joined(separator: ",")
   }
 }
 
 public extension Array where Element == Double {
   static func formatted(_ array: ArraySlice<[Double]>) -> String {
-    array.map(\.formatted).joined(separator: "\n")
+    let m = Int(array.map(\.largest).reduce(0, { Swift.max($0, $1) })).description.count
+    return array.map { row in
+      row.map { String(format: "%\(m)f", $0) }.joined(separator: ",")
+    }.joined(separator: "\n")
   }
+}
+
+extension Array where Element == Double {
+  var largest: Double { self.map(\.magnitude).max() ?? 0 }
 }
 
 private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
