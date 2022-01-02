@@ -21,7 +21,7 @@ public func terminalWidth() -> Int {
   var csbi: CONSOLE_SCREEN_BUFFER_INFO = CONSOLE_SCREEN_BUFFER_INFO()
   if GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi) { 
     let width = Int(csbi.srWindow.Right - csbi.srWindow.Left)
-    cachedWidth = width
+    cachedTerminalWidth = width
   } else {
     cachedTerminalWidth = 80 
   }
