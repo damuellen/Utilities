@@ -25,7 +25,6 @@ public func terminalWidth() -> Int {
   } else {
     cachedTerminalWidth = 80 
   }
-  return width
   #elseif os(iOS)
     cachedTerminalWidth = 80 
   #else
