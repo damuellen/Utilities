@@ -30,7 +30,7 @@ public struct CSV {
 
   public func peek(_ range: Array.Indices) -> String {
     if let headerRow = headerRow {
-      var minWidth = headerRow.map(\.count).max() ?? 1
+      let minWidth = headerRow.map(\.count).max() ?? 1
       let formatted = Array.justified(dataRows[range], minWidth: minWidth)
       let width = (terminalWidth() / formatted.1+1) * formatted.1+1
       return String(headerRow.map { $0.leftpad(length: formatted.1) }
