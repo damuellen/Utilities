@@ -144,9 +144,9 @@ public final class Gnuplot: CustomStringConvertible {
       if case .svg = terminal {
         config = settings.merging(terminal.output){old,_ in old}.concatenated + SVG.concatenated } 
       else if case .pdf = terminal {
-        config = settings.merging(terminal.output){_,new in new}.concatenated + PDF.concatenated }
+        config = settings.merging(terminal.output){old,_ in old}.concatenated + PDF.concatenated }
       else { 
-        config = settings.merging(terminal.output){_,new in new}.concatenated + PNG.concatenated + SVG.concatenated
+        config = settings.merging(terminal.output){old,_ in old}.concatenated + PNG.concatenated + SVG.concatenated
       }
     } else {
       config = settings.concatenated + PNG.concatenated
@@ -247,7 +247,28 @@ public final class Gnuplot: CustomStringConvertible {
     ]
     return dict
   }
-
+  
+  public init<T: FloatingPoint>(y1s: [[[T]]], y2s: [[[T]]], titles: [String] = []) {
+    self.datablock = "\n$data <<EOD\n" 
+      + y1s.map { separated($0.transposed()) }.joined(separator: "\n\n\n")
+      + "\n\n\n"
+      + y2s.map { separated($0.transposed()) }.joined(separator: "\n\n\n")
+      + "\n\n\nEOD\n\n"
+    let setting = [
+      "key": "off", "xdata": "time", "timefmt": "'%s'", "format x": "'%k'",
+      "xtics": "21600 ", "yrange": "0:1", "ytics": "0.2", "term": "pdfcairo size 7.1, 10",
+    ]
+    self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting){_,new in new}
+    let y = y1s.count
+    let name = titles.joined(separator: "_")
+    self.defaultPlot = y1s.indices.map { i in
+      "set output '\(name)_\(i+1).pdf'\nset multiplot layout 8,4 rowsfirst\n"
+        + (1...y1s[i].count).map { c in 
+        "plot $data i \(i) u ($0*300):\(c) axes x1y1 w l ls 30, $data i \(i+y) u ($0*300):\(c) axes x1y2 w l ls 31" 
+        }.joined(separator: "\n") + "\nunset multiplot"
+    }.joined(separator: "\n")
+  }
+  
   public init<T: FloatingPoint>(xys: [[[T]]], xylabels: [[String]] = [], titles: [String] = [], style: Style = .linePoints) {
     let missingTitles = xys.count - titles.count
     var titles = titles
