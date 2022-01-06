@@ -1,12 +1,11 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.3
 import PackageDescription
 
 let package = Package(
   name: "Utilities",
-  platforms: [.macOS(.v10_15), .iOS(.v15)],
+  platforms: [.macOS(.v10_15), .iOS(.v14)],
   products: [.library(name: "Utilities", targets: ["Utilities"])],
   dependencies: [
-    .package(url: "https://github.com/damuellen/xlsxwriter.swift.git", .branch("main")),
     .package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")
   ],
   targets: [
