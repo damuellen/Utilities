@@ -248,7 +248,7 @@ public final class Gnuplot: CustomStringConvertible {
     return dict
   }
   
-  public init<T: FloatingPoint>(y1s: [[[T]]], y2s: [[[T]]], titles: [String] = []) {
+  public init<T: FloatingPoint>(y1s: [[[T]]], y2s: [[[T]]]) {
     self.datablock = "\n$data <<EOD\n" 
       + y1s.map { separated($0.transposed()) }.joined(separator: "\n\n\n")
       + "\n\n\n"
@@ -260,9 +260,8 @@ public final class Gnuplot: CustomStringConvertible {
     ]
     self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting){_,new in new}
     let y = y1s.count
-    let name = titles.joined(separator: "_")
     self.defaultPlot = y1s.indices.map { i in
-      "set output '\(name)_\(i+1).pdf'\nset multiplot layout 8,4 rowsfirst\n"
+      "\nset multiplot layout 8,4 rowsfirst\n"
         + (1...y1s[i].count).map { c in 
         "plot $data i \(i) u ($0*300):\(c) axes x1y1 w l ls 30, $data i \(i+y) u ($0*300):\(c) axes x1y2 w l ls 31" 
         }.joined(separator: "\n") + "\nunset multiplot"
