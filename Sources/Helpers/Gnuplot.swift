@@ -30,6 +30,7 @@ public final class Gnuplot: CustomStringConvertible {
   #endif
   #if canImport(PythonKit)
   public func display() {
+    settings["term"] = "svg size \(width),\(height)"
     settings["object"] = "rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"
     guard let svg = svg else { return }
     let display = Python.import("IPython.display")
@@ -162,7 +163,7 @@ public final class Gnuplot: CustomStringConvertible {
         config = settings.merging(terminal.output){old,_ in old}.concatenated + PNG.concatenated + SVG.concatenated
       }
     } else {
-      config = settings.concatenated + PNG.concatenated
+      config = settings.concatenated
     }
     let plot = userPlot ?? defaultPlot
     if multiplot > 1 {
