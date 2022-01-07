@@ -1,12 +1,12 @@
 // swift-tools-version:4.2
 import PackageDescription
 
-#if swift(>=5.4)
-let dependencies: [Package.Dependency] = [.package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")]
-let targetDependencies: [Target.Dependency] = ["Libc", "CZLib", "Numerics"]
-#else
+#if swift(<5.4)
 let dependencies: [Package.Dependency] = []
 let targetDependencies: [Target.Dependency] = ["Libc", "CZLib"]
+#else
+let dependencies: [Package.Dependency] = [.package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")]
+let targetDependencies: [Target.Dependency] = ["Libc", "CZLib", "Numerics"]
 #endif
 
 let package = Package(
