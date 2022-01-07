@@ -262,8 +262,8 @@ public final class Gnuplot: CustomStringConvertible {
     return dict
   }
   
-  public init<T: FloatingPoint>(y1s: [[T]], y2s: [[T]]) {
-    .init(y1s: [y1s], y2s: [y2s])
+  public convenience init<T: FloatingPoint>(y1: [[T]], y2: [[T]]) {
+    self.init(y1s: [y1], y2s: [y2])
   }
   
   public init<T: FloatingPoint>(y1s: [[[T]]], y2s: [[[T]]]) {
