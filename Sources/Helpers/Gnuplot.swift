@@ -262,6 +262,10 @@ public final class Gnuplot: CustomStringConvertible {
     return dict
   }
   
+  public init<T: FloatingPoint>(y1s: [[T]], y2s: [[T]]) {
+    self(y1s: [y1s], y2s: [y2s])
+  }
+  
   public init<T: FloatingPoint>(y1s: [[[T]]], y2s: [[[T]]]) {
     self.datablock = "\n$data <<EOD\n" 
       + y1s.map { separated($0.transposed()) }.joined(separator: "\n\n\n")
