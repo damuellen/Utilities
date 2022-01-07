@@ -320,13 +320,13 @@ public final class Gnuplot: CustomStringConvertible {
       }
       .joined(separator: ", \\\n")
   }
+  #if swift(>=5.4)
   public convenience init<S: Sequence, F: FloatingPoint>(xys: S..., labels: [String]..., titles: [String] = [], style: Style = .linePoints) where S.Element == SIMD2<F> { 
     self.init(xys: xys.map { xy in xy.map { [$0.x, $0.y] } }, xylabels: labels, titles: titles, style: style)
   }
   public convenience init<S: Sequence, F: FloatingPoint>(xys: S..., labels: [String]..., titles: [String] = [], style: Style = .linePoints) where S.Element == [F] {
     self.init(xys: xys.map { xy in xy.map { $0 } }, xylabels: labels, titles: titles, style: style) 
   }
-  #if swift(>=5.4)
   public convenience init<S: Collection, F: FloatingPoint>(xs: S..., ys: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
     if ys.isEmpty {
       self.init(xys: xs.map { $0.map { [$0] } }, titles: titles, style: style)
