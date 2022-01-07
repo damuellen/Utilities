@@ -263,7 +263,7 @@ public final class Gnuplot: CustomStringConvertible {
   }
   
   public init<T: FloatingPoint>(y1s: [[T]], y2s: [[T]]) {
-    self(y1s: [y1s], y2s: [y2s])
+    .init(y1s: [y1s], y2s: [y2s])
   }
   
   public init<T: FloatingPoint>(y1s: [[[T]]], y2s: [[[T]]]) {
