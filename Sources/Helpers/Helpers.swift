@@ -49,7 +49,7 @@ public func start(_ command: String) {
   }
   #endif
 }
-#if os(Windows)
+#if os(Windows) || os(Linux)
 extension FileManager {
   static func transientDirectory(url: (URL) throws -> Void) throws {
     let fm = FileManager.default
@@ -61,7 +61,7 @@ extension FileManager {
   }
 }
 
-extension URL: ExpressibleByStringLiteral {
+extension URL {
   var windowsPath: String { path.replacingOccurrences(of: "/", with: "\\") }
 
   static public func temporaryFile() -> URL {
