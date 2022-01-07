@@ -7,7 +7,7 @@
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
-#if swift(>=5.4)
+
 import Numerics
 
 func explicitRungeKutta<Vector: OdeVector, Tableau: ButchersTableau>(
@@ -218,5 +218,4 @@ extension SIMD8: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD16: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD32: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD64: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
-#endif
 #endif

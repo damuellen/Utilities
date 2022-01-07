@@ -1,23 +1,21 @@
-// swift-tools-version:4.2
+// swift-tools-version:5.3
 import PackageDescription
-
-var dependencies: [Package.Dependency] = []
-var targetDependencies: [Target.Dependency] = ["Libc", "CZLib"]
-#if swift(>=5.4)
-dependencies = [.package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")]
-targetDependencies.append("Numerics")
-#endif
 
 let package = Package(
   name: "Utilities",
+  platforms: [.macOS(.v10_15), .iOS(.v14)],
   products: [.library(name: "Utilities", targets: ["Utilities"])],
-  dependencies: dependencies,
+  dependencies: [
+    .package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")
+  ],
   targets: [
     .target(name: "Libc"), 
     .target(name: "CZLib"), 
     .target(name: "CIAPWSIF97"),
     .target(name: "Physics", dependencies: ["Helpers", "CIAPWSIF97"]),
     .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
-    .target(name: "Helpers", dependencies: targetDependencies),
+    .target(name: "Helpers", dependencies: ["Libc", 
+      .byName(name: "CZLib", condition: .when(platforms: [.linux])),
+      .product(name: "Numerics", package: "swift-numerics")])
   ]
 )

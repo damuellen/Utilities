@@ -333,7 +333,7 @@ public final class Gnuplot: CustomStringConvertible {
       }
       .joined(separator: ", \\\n")
   }
-  #if swift(>=5.4)
+
   public convenience init<S: Sequence, F: FloatingPoint>(xys: S..., labels: [String]..., titles: [String] = [], style: Style = .linePoints) where S.Element == SIMD2<F> { 
     self.init(xys: xys.map { xy in xy.map { [$0.x, $0.y] } }, xylabels: labels, titles: titles, style: style)
   }
@@ -357,7 +357,7 @@ public final class Gnuplot: CustomStringConvertible {
   public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
      self.init(xy1s: xy1s, xy2s: xy2s, titles: titles, style: style) 
   }
-  #endif
+
   public enum Style {
     case lines(smooth: Bool)
     case linePoints
