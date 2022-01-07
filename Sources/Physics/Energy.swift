@@ -59,7 +59,15 @@ extension Energy: AdditiveArithmetic {
     Energy(lhs.joule + rhs.joule)
   }
 
+  public static func += (lhs: inout Energy, rhs: Energy) {
+    lhs = Energy(lhs.joule + rhs.joule)
+  }
+
   public static func - (lhs: Energy, rhs: Energy) -> Energy {
     Energy(lhs.joule - rhs.joule)
+  }
+
+  public static func -= (lhs: inout Energy, rhs: Energy) {
+    lhs = Energy(lhs.joule - rhs.joule)
   }
 }

@@ -157,11 +157,11 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
 
   public func enthalpy(_ temperature: Temperature) -> Double {
     precondition(temperature.kelvin > freezeTemperature.kelvin)
-    return enthalpyFromTemperature(temperature.celsius)
+    return enthalpyFromTemperature.callAsFunction(temperature.celsius)
   }
 
   public func temperature(_ enthalpy: Double) -> Temperature {
-    let celsius = temperatureFromEnthalpy(enthalpy)
+    let celsius = temperatureFromEnthalpy.callAsFunction(enthalpy)
     precondition(celsius > freezeTemperature.celsius,
       "Fell below freezing point.\n")
     return Temperature(celsius: celsius)
@@ -182,9 +182,9 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
   }
 
   public func temperature(enthalpy: Double, degree: Double) -> Double {
-    let h1 = enthalpyFromTemperature(degree)
+    let h1 = enthalpyFromTemperature.callAsFunction(degree)
     let h2 = enthalpy + h1
-    let temperature = temperatureFromEnthalpy(h2)
+    let temperature = temperatureFromEnthalpy.callAsFunction(h2)
     return temperature
   }
 

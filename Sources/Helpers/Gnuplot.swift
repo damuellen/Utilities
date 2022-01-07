@@ -19,9 +19,13 @@ import PythonKit
 /// Create graphs using gnuplot.
 public final class Gnuplot: CustomStringConvertible {
   #if canImport(Cocoa)
-  public var image: NSImage? { 
-    guard let data = try? self(.pngSmall(path: "")) else { return nil }
-    return NSImage(data: data) 
+  public var image: NSImage? {
+    guard let data = try? callAsFunction(.pngSmall(path: "")) else { return nil }
+    #if swift(>=5.4)
+    return NSImage(data: data)
+    #else
+    return NSImage(data: data!)
+    #endif
   }
   #endif
   #if canImport(PythonKit)
@@ -34,7 +38,7 @@ public final class Gnuplot: CustomStringConvertible {
   #endif
   public var svg: String? {
     do { 
-      guard let data = try self(.svg(path: "")) else { return nil }
+      guard let data = try callAsFunction(.svg(path: "")) else { return nil }
       let svg = data.dropFirst(270)
       return #"<svg width="\#(width+25)" height="\#(height)" viewBox="0 0 \#(width+25) \#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
       + String(decoding: svg, as: Unicode.UTF8.self)
@@ -82,7 +86,11 @@ public final class Gnuplot: CustomStringConvertible {
     #if os(Windows)
     gnuplot.executableURL = "C:/bin/gnuplot.exe"
     #elseif os(macOS)
-    gnuplot.executableURL = "/opt/homebrew/bin/gnuplot"
+    if #available(macOS 10.13, *) {
+      gnuplot.executableURL = "/opt/homebrew/bin/gnuplot"
+    } else {
+      gnuplot.launchPath = "/opt/homebrew/bin/gnuplot"
+    }
     #endif
     #if !os(Windows)
     gnuplot.standardInput = Pipe()
@@ -108,7 +116,11 @@ public final class Gnuplot: CustomStringConvertible {
   /// Execute the plot commands.
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
     let gnuplot = Gnuplot.process()
+    if #available(macOS 10.13, *) {
     if !gnuplot.isRunning { try gnuplot.run() }
+    } else {
+    if !gnuplot.isRunning { gnuplot.launch() }
+    }
     let stdin = gnuplot.standardInput as! Pipe
     stdin.fileHandleForWriting.write(commands(terminal).data(using: .utf8)!)
     let stdout = gnuplot.standardOutput as! Pipe
@@ -129,10 +141,11 @@ public final class Gnuplot: CustomStringConvertible {
     }
     return data
     #else
-    try stdin.fileHandleForWriting.close()
     if #available(macOS 10.15.4, *) {
+      try stdin.fileHandleForWriting.close()
       return try stdout.fileHandleForReading.readToEnd()
     } else {
+      stdin.fileHandleForWriting.closeFile()
       return stdout.fileHandleForReading.readDataToEndOfFile()
     }
     #endif

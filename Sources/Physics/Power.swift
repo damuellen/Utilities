@@ -79,7 +79,15 @@ extension Power: AdditiveArithmetic {
     Power(lhs.watt + rhs.watt)
   }
 
+  public static func += (lhs: inout Power, rhs: Power) {
+    lhs = Power(lhs.watt + rhs.watt)
+  }
+
   public static func - (lhs: Power, rhs: Power) -> Power {
     Power(lhs.watt - rhs.watt)
+  }
+
+  public static func -= (lhs: inout Power, rhs: Power) {
+    lhs = Power(lhs.watt - rhs.watt)
   }
 }

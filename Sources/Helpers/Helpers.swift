@@ -44,10 +44,12 @@ public func start(_ command: String) {
   #if os(Windows)
   let _ = ShellExecuteW(nil, "open".wide, command.wide, nil, nil, 8)
   #elseif os(macOS)
+  if #available(macOS 10.13, *) {
   do { try Process.run("/usr/bin/open", arguments: [command]) } catch {}
+  }
   #endif
 }
-
+#if os(Windows)
 extension FileManager {
   static func transientDirectory(url: (URL) throws -> Void) throws {
     let fm = FileManager.default
@@ -60,7 +62,6 @@ extension FileManager {
 }
 
 extension URL: ExpressibleByStringLiteral {
-  public init(stringLiteral value: String) { self.init(fileURLWithPath: value) }
   var windowsPath: String { path.replacingOccurrences(of: "/", with: "\\") }
 
   static public func temporaryFile() -> URL {
@@ -70,6 +71,11 @@ extension URL: ExpressibleByStringLiteral {
   }
 
   public func removeItem() throws { try FileManager.default.removeItem(at: self) }
+}
+#endif
+
+extension URL: ExpressibleByStringLiteral {
+  public init(stringLiteral value: String) { self.init(fileURLWithPath: value) }
 }
 
 extension String {
@@ -138,13 +144,13 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
 
   return { value in a0 + a1 * value }
 }
-
+#if swift(>=5.4)
 public typealias XY = SIMD2<Double>
 
 extension Sequence where Element == XY { public func plot(_ terminal: Gnuplot.Terminal) -> Data? { try? Gnuplot(xys: self, style: .points)(terminal) } }
 
-@inlinable public func solve(inDomain range: ClosedRange<Double>, step: Double, f: (Double) -> Double) -> [[Double]] { stride(from: range.lowerBound, through: range.upperBound, by: step).map { [$0, f($0)] } }
-
+@inlinable public func evaluate(inDomain range: ClosedRange<Double>, step: Double, f: (Double) -> Double) -> [[Double]] { stride(from: range.lowerBound, through: range.upperBound, by: step).map { [$0, f($0)] } }
+#endif
 extension Comparable {
   public mutating func clamp(to limits: ClosedRange<Self>) { self = min(max(self, limits.lowerBound), limits.upperBound) }
   public func clamped(to limits: ClosedRange<Self>) -> Self { min(max(self, limits.lowerBound), limits.upperBound) }

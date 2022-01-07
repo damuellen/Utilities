@@ -59,7 +59,15 @@ extension Mass: AdditiveArithmetic {
     Mass(lhs.kg + rhs.kg)
   }
 
+  public static func += (lhs: inout Mass, rhs: Mass) {
+    lhs = Mass(lhs.kg + rhs.kg)
+  }
+
   public static func - (lhs: Mass, rhs: Mass) -> Mass {
     Mass(lhs.kg - rhs.kg)
+  }
+
+  public static func -= (lhs: inout Mass, rhs: Mass) {
+    lhs = Mass(lhs.kg - rhs.kg)
   }
 }

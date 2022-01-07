@@ -117,7 +117,15 @@ extension MassFlow: AdditiveArithmetic {
     MassFlow(lhs.rate + rhs.rate)
   }
 
+  public static func += (lhs: inout MassFlow, rhs: MassFlow) {
+    lhs = MassFlow(lhs.rate + rhs.rate)
+  }
+
   public static func - (lhs: MassFlow, rhs: MassFlow) -> MassFlow {
     MassFlow(lhs.rate - rhs.rate)
+  }
+
+  public static func -= (lhs: inout MassFlow, rhs: MassFlow) {
+    lhs = MassFlow(lhs.rate - rhs.rate)
   }
 }

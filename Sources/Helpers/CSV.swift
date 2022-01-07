@@ -28,9 +28,9 @@ public struct CSV {
     return peek(0..<dataRows.endIndex) 
   }
 
-  public func peek(_ range: Array.Indices) -> String {
+  public func peek(_ range: Array<Any>.Indices) -> String {
     if let headerRow = headerRow {
-      let minWidth = headerRow.map(\.count).max() ?? 1
+      let minWidth = headerRow.map{$0.count}.max() ?? 1
       let formatted = Array.justified(dataRows[range], minWidth: minWidth)
       let width = (terminalWidth() / formatted.1+1) * formatted.1+1
       return String(headerRow.map { $0.leftpad(length: formatted.1) }
@@ -110,13 +110,13 @@ public struct CSV {
 
 public extension Array where Element == Double {
   var formatted: String {
-    self.map(\.description).joined(separator: ", ")
+    self.map{$0.description}.joined(separator: ", ")
   }
 }
 
 public extension Array where Element == Double {
   static func justified(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
-    let m = Int(array.map(\.largest).reduce(Double(minWidth), { Swift.max($0, $1) })).description.count
+    let m = Int(array.map{$0.largest}.reduce(Double(minWidth), { Swift.max($0, $1) })).description.count
     let width = (terminalWidth() / minWidth+1) * minWidth+1
     return (array.map { row in
       String(row.map { String(format: "%.1f", $0).leftpad(length: m+2) }.joined(separator: " ").prefix(width))
@@ -125,7 +125,7 @@ public extension Array where Element == Double {
 }
 
 extension Array where Element == Double {
-  var largest: Double { self.map(\.magnitude).max() ?? 0 }
+  var largest: Double { self.map{$0.magnitude}.max() ?? 0 }
 }
 
 private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
