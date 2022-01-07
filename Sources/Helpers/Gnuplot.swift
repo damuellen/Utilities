@@ -350,10 +350,6 @@ public final class Gnuplot: CustomStringConvertible {
       self.init(xys: zip(xs, ys).map { a, b in zip(a, b).map { [$0, $1] } }, xylabels: labels, titles: titles, style: style)
     }
   }
-  public convenience init<X: Collection, Y: Collection, F: FloatingPoint, S: SIMD>(xs: X, ys: Y, labels: [String], titles: String..., style: Style = .linePoints) where X.Element == F, Y.Element == S, S.Scalar == F {
-    let xys = ys.first!.indices.map { i in zip(xs, ys).map { [$0.0, $0.1[i]] } }
-    self.init(xys: xys, xylabels: [labels], titles: titles, style: style)
-  }
   public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
      self.init(xy1s: xy1s, xy2s: xy2s, titles: titles, style: style) 
   }
