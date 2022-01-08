@@ -5,9 +5,6 @@ let package = Package(
   name: "Utilities",
   platforms: [.macOS(.v10_15), .iOS(.v14)],
   products: [.library(name: "Utilities", targets: ["Utilities"])],
-  dependencies: [
-    .package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")
-  ],
   targets: [
     .target(name: "Libc"), 
     .target(name: "CZLib"), 
@@ -15,7 +12,6 @@ let package = Package(
     .target(name: "Physics", dependencies: ["Helpers", "CIAPWSIF97"]),
     .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
     .target(name: "Helpers", dependencies: ["Libc", 
-      .byName(name: "CZLib", condition: .when(platforms: [.linux])),
-      .product(name: "Numerics", package: "swift-numerics")])
+      .byName(name: "CZLib", condition: .when(platforms: [.linux]))])
   ]
 )
