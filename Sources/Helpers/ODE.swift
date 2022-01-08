@@ -8,8 +8,11 @@
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
 
+#if canImport(Numerics)
 import Numerics
-
+#else
+import Libc
+#endif
 func explicitRungeKutta<Vector: OdeVector, Tableau: ButchersTableau>(
   tableau: Tableau, ys: inout UnsafeMutableBufferPointer<Vector>, ts: [Vector.Scalar],
   y0: Vector, dydx: (Vector, Vector.Scalar) -> Vector, tol: Vector.Scalar) -> Int
@@ -87,7 +90,11 @@ where Vector.Scalar == Tableau.Scalar {
         k[stages - 1] = last_k_store
       }
       // adapt step size
+      #if canImport(Numerics)
       h_n *= 0.9 * Scalar.pow(tol / E_hp1, 1.0 / (Scalar(order) + 1.0))
+      #else 
+      h_n *= Vector.Scalar(0.9 * pow(Double(tol) / Double(E_hp1), 1.0 / (Double(order) + 1.0)))
+      #endif
     }
   }
   return it
@@ -106,7 +113,7 @@ protocol ButchersTableau {
   var p: [[Scalar]] { get }
 }
 
-struct DormondPrice<Scalar: Real & BinaryFloatingPoint>: ButchersTableau {
+struct DormondPrice<Scalar: BinaryFloatingPoint>: ButchersTableau {
   typealias Scalar = Scalar
   let stages = 7
   let order = 5
@@ -135,8 +142,11 @@ struct DormondPrice<Scalar: Real & BinaryFloatingPoint>: ButchersTableau {
 }
 
 public protocol OdeVector: AdditiveArithmetic {
+  #if canImport(Numerics)
   associatedtype Scalar: Real & BinaryFloatingPoint
-
+  #else
+  associatedtype Scalar: BinaryFloatingPoint
+  #endif
   var scalarCount: Int { get }
   subscript(index: Int) -> Self.Scalar { get set }
 
@@ -185,22 +195,7 @@ extension Double: OdeVector {
   public func inf_norm() -> Scalar { return abs(self) }
 }
 
-// Make a Float conform to a OdeVector of size 1
-extension Float: OdeVector {
-  public typealias Scalar = Float
-
-  public subscript(index: Int) -> Self.Scalar {
-    get { return self }
-    set { self = newValue }
-  }
-
-  public var scalarCount: Int { return 1 }
-
-  public init(repeating x: Scalar) { self = x }
-
-  public func inf_norm() -> Scalar { return abs(self) }
-}
-
+#if canImport(Numerics)
 // Make all the SIMD types conform to a OdeVector
 extension SIMD2: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD3: OdeVector where Scalar: Real & BinaryFloatingPoint {}
@@ -218,4 +213,5 @@ extension SIMD8: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD16: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD32: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD64: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
+#endif
 #endif
