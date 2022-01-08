@@ -5,6 +5,9 @@ let package = Package(
   name: "Utilities",
   platforms: [.macOS(.v10_15), .iOS(.v14)],
   products: [.library(name: "Utilities", targets: ["Utilities"])],
+    dependencies: [
+     .package(url: "https://github.com/pvieito/PythonKit.git", .branch("master"))
+   ],
   targets: [
     .target(name: "Libc"), 
     .target(name: "CZLib"), 
@@ -12,6 +15,7 @@ let package = Package(
     .target(name: "Physics", dependencies: ["Helpers", "CIAPWSIF97"]),
     .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
     .target(name: "Helpers", dependencies: ["Libc", 
-      .byName(name: "CZLib", condition: .when(platforms: [.linux]))])
+      .byName(name: "CZLib", condition: .when(platforms: [.linux])),
+      .product(name: "PythonKit", package: "PythonKit")])
   ]
 )
