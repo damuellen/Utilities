@@ -85,13 +85,6 @@ public struct CSV {
     self.headerRow = !hasHeader ? nil : data[..<end].split(separator: separator).map { slice in
       String(decoding: slice.filter(isSpace), as: UTF8.self)
     }
-    #if DEBUG
-    if let headerRow = headerRow {
-      print("Header row detected.", headerRow)
-    } else {
-      print("No header.")
-    }
-    #endif
     self.dataRows = data[start...].withUnsafeBytes { content in
       content.split(separator: newLine).concurrentMap { line in
         let line = hasCR ? line.dropLast() : line
@@ -99,12 +92,6 @@ public struct CSV {
         return parse(buffer, separator: separator)
       }
     }
-    #if DEBUG
-    if let headerRow = headerRow, dataRows[0].count != headerRow.count {
-      print("Header missing !")
-      print(dataRows[0])
-    }
-    #endif
   }
 }
 
