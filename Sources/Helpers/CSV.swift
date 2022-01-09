@@ -165,8 +165,9 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
 }
 
 #if canImport(PythonKit)
+import PythonKit
 extension CSV {
-  public func display(_ range: Array<Any>.Indices = values.indices) {
+  public func display(_ range: Array<Any>.Indices? = nil) {
     let html = """
     <html>
     <head>
@@ -200,12 +201,18 @@ extension CSV {
     """
     var table = "\n<table>\n"
     if let headerRow = headerRow {
-      table += headerRow.isEmpty ? "" : "\t<tr>\n" + self.map {
+      table += headerRow.isEmpty ? "" : "\t<tr>\n" + headerRow.map {
           "\t\t<th>" + $0.description + "</th>\n"
         }.joined() + "\t</tr>\n"
     }
-    table += values[range].map { row in
-      "\t<tr>\n" + dataRows.map {
+    let rows: [[Double]]
+    if let range = range {
+      rows = dataRows[range]
+    } else {
+      rows = dataRows
+    }
+    table += rows.map { row in
+      "\t<tr>\n" + row.map {
         "\t\t<td>" + String(format: "%.2f", $0) + "</td>\n"
       }.joined() + "\t</tr>\n"
     }.joined()
