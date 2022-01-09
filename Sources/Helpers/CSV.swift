@@ -163,3 +163,56 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
   }
   return a
 }
+
+#if canImport(PythonKit)
+extension CSV {
+  public func display(_ range: Array<Any>.Indices = values.indices) {
+    let html = """
+    <html>
+    <head>
+    <style>
+    table {
+      font-family: sans-serif;
+      font-size: small;
+      border-collapse: collapse;
+      table-layout: auto;
+    }
+    td, th {
+      border: 1px solid #ddd;
+      padding: 4px;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 10%;
+    }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #ddd; }
+    th {
+      padding-top: 6px;
+      padding-bottom: 6px;
+      text-align: center;
+      background-color: Teal;
+      color: white;
+    }
+    </style>
+    </head>
+    <body>
+    """
+    var table = "\n<table>\n"
+    if let headerRow = headerRow {
+      table += headerRow.isEmpty ? "" : "\t<tr>\n" + self.map {
+          "\t\t<th>" + $0.description + "</th>\n"
+        }.joined() + "\t</tr>\n"
+    }
+    table += values[range].map { row in
+      "\t<tr>\n" + dataRows.map {
+        "\t\t<td>" + String(format: "%.2f", $0) + "</td>\n"
+      }.joined() + "\t</tr>\n"
+    }.joined()
+    table += "</table>\n"
+
+    let display = Python.import("IPython.display")
+    display.display(display.HTML(data: html + table + "</body>\n</html>\n"))
+  }
+}
+#endif
