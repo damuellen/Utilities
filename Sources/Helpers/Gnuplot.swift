@@ -30,6 +30,7 @@ public final class Gnuplot: CustomStringConvertible {
   #endif
   #if canImport(PythonKit)
   public func display() {
+    settings["term"] = "svg size \(width),\(height)"
     settings["object"] = "rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"
     guard let svg = svg else { return }
     let display = Python.import("IPython.display")
@@ -162,7 +163,7 @@ public final class Gnuplot: CustomStringConvertible {
         config = settings.merging(terminal.output){old,_ in old}.concatenated + PNG.concatenated + SVG.concatenated
       }
     } else {
-      config = settings.concatenated + PNG.concatenated
+      config = settings.concatenated
     }
     let plot = userPlot ?? defaultPlot
     if multiplot > 1 {
@@ -261,6 +262,10 @@ public final class Gnuplot: CustomStringConvertible {
     return dict
   }
   
+  public convenience init<T: FloatingPoint>(y1: [[T]], y2: [[T]]) {
+    self.init(y1s: [y1], y2s: [y2])
+  }
+  
   public init<T: FloatingPoint>(y1s: [[[T]]], y2s: [[[T]]]) {
     self.datablock = "\n$data <<EOD\n" 
       + y1s.map { separated($0.transposed()) }.joined(separator: "\n\n\n")
@@ -333,7 +338,7 @@ public final class Gnuplot: CustomStringConvertible {
       }
       .joined(separator: ", \\\n")
   }
-
+  #if swift(>=5.4)
   public convenience init<S: Sequence, F: FloatingPoint>(xys: S..., labels: [String]..., titles: [String] = [], style: Style = .linePoints) where S.Element == SIMD2<F> { 
     self.init(xys: xys.map { xy in xy.map { [$0.x, $0.y] } }, xylabels: labels, titles: titles, style: style)
   }
@@ -353,7 +358,7 @@ public final class Gnuplot: CustomStringConvertible {
   public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
      self.init(xy1s: xy1s, xy2s: xy2s, titles: titles, style: style) 
   }
-
+  #endif
   public enum Style {
     case lines(smooth: Bool)
     case linePoints
@@ -403,16 +408,8 @@ public final class Gnuplot: CustomStringConvertible {
   private let PDF = ["border 31 lw 1 lc rgb 'black'", "grid ls 18"]
   private let PNG = ["object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"]
 }
-#if os(Windows)
 fileprivate let height = 720
 fileprivate let width = 1255
-#elseif os(Linux)
-fileprivate let height = 750
-fileprivate let width = 1000
-#else
-fileprivate let height = 800
-fileprivate let width = 1255
-#endif
 
 private func separated<T: FloatingPoint>(_ xys: [[T]]) -> String { xys.map { xy in xy.map { "\($0)" }.joined(separator: " ") }.joined(separator: "\n") }
 private func separated<T: FloatingPoint>(_ xys: [[T]], labels: [String]) -> String { 
