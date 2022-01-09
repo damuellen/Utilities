@@ -205,11 +205,11 @@ extension CSV {
           "\t\t<th>" + $0.description + "</th>\n"
         }.joined() + "\t</tr>\n"
     }
-    let rows: [[Double]]
+    let rows: ArraySlice<[Double]>
     if let range = range {
       rows = dataRows[range]
     } else {
-      rows = dataRows
+      rows = dataRows[...]
     }
     table += rows.map { row in
       "\t<tr>\n" + row.map {
