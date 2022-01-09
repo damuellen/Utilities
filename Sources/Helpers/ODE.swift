@@ -41,7 +41,6 @@ where Vector.Scalar == Tableau.Scalar {
   while t_n < ts[N - 1] {
     var step_rejected = true
     while step_rejected {
-      // reuse last k (we have asserted that the last c value is 1.0)
       let last_k_store = k[stages - 1]
       k[0] = k[stages - 1]
       for i in 1..<stages {
@@ -50,7 +49,6 @@ where Vector.Scalar == Tableau.Scalar {
         k[i] = dydx(y_hat_n + h_n * sum_ak, t_n + c[i] * h_n)
       }
 
-      // calculate final value and error
       var error = Vector(repeating: 0)
       var sum_bk = Vector(repeating: 0)
       for i in 0..<stages {
@@ -59,10 +57,8 @@ where Vector.Scalar == Tableau.Scalar {
       }
       let y_hat_np1 = y_hat_n + h_n * sum_bk
 
-      // check if step is successful, i.e error is below set tolerance
       let E_hp1 = (h_n * error).inf_norm()
       if E_hp1 < tol {
-        // if moved over any requested times then interpolate their values
         let t_np1 = t_n + h_n
         while it < ts.count && t_np1 >= ts[it] {
           let sigma = (ts[it] - t_n) / h_n
@@ -79,17 +75,13 @@ where Vector.Scalar == Tableau.Scalar {
           ys[it] = y_hat_n + h_n * Phi
           it += 1
         }
-
-        // move to next step
         step_rejected = false
         y_hat_n = y_hat_np1
         t_n = t_np1
         step_count += 1
       } else {
-        // failed step, reset last k back to stored value
         k[stages - 1] = last_k_store
       }
-      // adapt step size
       #if canImport(Numerics)
       h_n *= 0.9 * Scalar.pow(tol / E_hp1, 1.0 / (Scalar(order) + 1.0))
       #else 
@@ -126,11 +118,8 @@ struct DormondPrice<Scalar: BinaryFloatingPoint>: ButchersTableau {
     [Scalar(9017.0 / 3168.0), Scalar(-355.0 / 33.0), Scalar(46732.0 / 5247.0), Scalar(49.0 / 176.0), Scalar(-5103.0 / 18656.0)],
     [Scalar(35.0 / 384.0), Scalar(0.0), Scalar(500.0 / 1113.0), Scalar(125.0 / 192.0), Scalar(-2187.0 / 6784.0), Scalar(11.0 / 84.0)],
   ]
-
   let b_hat: [Scalar] = [Scalar(35.0 / 384.0), Scalar(0.0), Scalar(500.0 / 1113.0), Scalar(125.0 / 192.0), Scalar(-2187.0 / 6784.0), Scalar(11.0 / 84.0), Scalar(0.0)]
-
   let b: [Scalar] = [Scalar(5179.0 / 57600.0), Scalar(0.0), Scalar(7571.0 / 16695.0), Scalar(393.0 / 640.0), Scalar(-92097.0 / 339200.0), Scalar(187.0 / 2100.0), Scalar(1.0 / 40.0)]
-
   let p: [[Scalar]] = [
     [Scalar(1.0), Scalar(-32272833064.0 / 11282082432.0), Scalar(34969693132.0 / 11282082432.0), Scalar(-13107642775.0 / 11282082432.0), Scalar(157015080.0 / 11282082432.0)], [Scalar(0.0), Scalar(0.0), Scalar(0.0), Scalar(0.0), Scalar(0.0)],
     [Scalar(0.0), Scalar(1323431896.0 * 100.0 / 32700410799.0), Scalar(-2074956840.0 * 100.0 / 32700410799.0), Scalar(914128567.0 * 100.0 / 32700410799.0), Scalar(-15701508.0 * 100.0 / 32700410799.0)],
@@ -196,7 +185,6 @@ extension Double: OdeVector {
 }
 
 #if canImport(Numerics)
-// Make all the SIMD types conform to a OdeVector
 extension SIMD2: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD3: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD4: OdeVector where Scalar: Real & BinaryFloatingPoint {}
@@ -204,7 +192,6 @@ extension SIMD8: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD16: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD32: OdeVector where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD64: OdeVector where Scalar: Real & BinaryFloatingPoint {}
-
 #if os(macOS) || os(iOS)
 extension SIMD2: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD3: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
@@ -214,4 +201,19 @@ extension SIMD16: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD32: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 extension SIMD64: AdditiveArithmetic where Scalar: Real & BinaryFloatingPoint {}
 #endif
+#else
+extension SIMD2: OdeVector where Scalar: BinaryFloatingPoint {}
+extension SIMD3: OdeVector where Scalar: BinaryFloatingPoint {}
+extension SIMD4: OdeVector where Scalar: BinaryFloatingPoint {}
+extension SIMD8: OdeVector where Scalar: BinaryFloatingPoint {}
+extension SIMD16: OdeVector where Scalar: BinaryFloatingPoint {}
+extension SIMD32: OdeVector where Scalar: BinaryFloatingPoint {}
+extension SIMD64: OdeVector where Scalar: BinaryFloatingPoint {}
+extension SIMD2: AdditiveArithmetic where Scalar: BinaryFloatingPoint {}
+extension SIMD3: AdditiveArithmetic where Scalar: BinaryFloatingPoint {}
+extension SIMD4: AdditiveArithmetic where Scalar: BinaryFloatingPoint {}
+extension SIMD8: AdditiveArithmetic where Scalar: BinaryFloatingPoint {}
+extension SIMD16: AdditiveArithmetic where Scalar: BinaryFloatingPoint {}
+extension SIMD32: AdditiveArithmetic where Scalar: BinaryFloatingPoint {}
+extension SIMD64: AdditiveArithmetic where Scalar: BinaryFloatingPoint {}
 #endif
