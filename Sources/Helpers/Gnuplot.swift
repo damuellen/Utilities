@@ -293,15 +293,25 @@ public final class Gnuplot: CustomStringConvertible {
     let missingTitles = xys.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
-    let data = xys.indices.map { i in 
-      titles[i] + "\n" + (xylabels.endIndex > i ? separated(xys[i], labels: xylabels[i]) : separated(xys[i]))
+    let data = xys.indices.map { i in
+      let header: String
+      if (xys[i].first?.count ?? 0) == titles.count {
+        header = "x " + titles.joined(separator: " ")
+      } else {
+        header =  titles[i]
+      }
+      header + "\n" + (xylabels.endIndex > i ? separated(xys[i], labels: xylabels[i]) : separated(xys[i]))
     }
     self.datablock = "\n$data <<EOD\n" + data.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
     self.settings = Gnuplot.settings(style)
     let (s, l) = style.raw
     self.defaultPlot = "plot " + xys.indices
       .map { i in
-        if (xys[i].first?.count ?? 0) > 1 {
+        let columns = xys[i].first?.count ?? 0
+        if (columns) > 1 {
+          if columns == titles.count {
+            return (2...xys[i][0].count).map { c in "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(c)" }.joined(separator: ", \\\n")
+          }
           return (2...xys[i][0].count).map { c in "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(1)" }.joined(separator: ", \\\n")
         } else {
           return "$data i \(i) u 0:1 \(s) w \(l) ls \(i+11) title columnheader(1)"
