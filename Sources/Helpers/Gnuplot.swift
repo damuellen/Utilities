@@ -293,7 +293,7 @@ public final class Gnuplot: CustomStringConvertible {
     let missingTitles = xys.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
-    let data: [String = xys.indices.map { i -> String in
+    let data: [String] = xys.indices.map { i -> String in
       let header: String
       if (xys[i].first?.count ?? 0) == titles.count {
         header = "x " + titles.joined(separator: " ")
