@@ -308,8 +308,8 @@ public final class Gnuplot: CustomStringConvertible {
     self.defaultPlot = "plot " + xys.indices
       .map { i -> String in
         let columns = xys[i].first?.count ?? 0
-        if (columns) > 1 {
-          if columns == titles.count {
+        if columns > 1 {
+          if columns - 1  == titles.count {
             return (2...xys[i][0].count).map { c in "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(c)" }.joined(separator: ", \\\n")
           }
           return (2...xys[i][0].count).map { c in "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(1)" }.joined(separator: ", \\\n")
