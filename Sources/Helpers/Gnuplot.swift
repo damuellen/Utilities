@@ -298,9 +298,9 @@ public final class Gnuplot: CustomStringConvertible {
       if (xys[i].first?.count ?? 0) == titles.count {
         header = "x " + titles.joined(separator: " ")
       } else {
-        header =  titles[i]
+        header = titles[i]
       }
-      header + "\n" + (xylabels.endIndex > i ? separated(xys[i], labels: xylabels[i]) : separated(xys[i]))
+      return header + "\n" + (xylabels.endIndex > i ? separated(xys[i], labels: xylabels[i]) : separated(xys[i]))
     }
     self.datablock = "\n$data <<EOD\n" + data.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
     self.settings = Gnuplot.settings(style)
