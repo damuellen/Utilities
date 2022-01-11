@@ -32,7 +32,9 @@ public final class Gnuplot: CustomStringConvertible {
   @discardableResult public func display() -> Gnuplot {
     settings["term"] = "svg size \(width),\(height)"
     settings["object"] = "rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"
-    guard let svg = svg else { return }
+    guard let svg = svg else { return self }
+    settings.removeValue(forKey: "term")
+    settings.removeValue(forKey: "object")
     let display = Python.import("IPython.display")
     display.display(display.SVG(data: svg))
     return self
