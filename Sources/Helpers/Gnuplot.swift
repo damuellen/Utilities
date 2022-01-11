@@ -293,7 +293,7 @@ public final class Gnuplot: CustomStringConvertible {
     let missingTitles = xys.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
-    let data = xys.indices.map { i in
+    let data: [String = xys.indices.map { i -> String in
       let header: String
       if (xys[i].first?.count ?? 0) == titles.count {
         header = "x " + titles.joined(separator: " ")
@@ -306,7 +306,7 @@ public final class Gnuplot: CustomStringConvertible {
     self.settings = Gnuplot.settings(style)
     let (s, l) = style.raw
     self.defaultPlot = "plot " + xys.indices
-      .map { i in
+      .map { i -> String in
         let columns = xys[i].first?.count ?? 0
         if (columns) > 1 {
           if columns == titles.count {
@@ -327,13 +327,13 @@ public final class Gnuplot: CustomStringConvertible {
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
     self.settings = Gnuplot.settings(style).merging(["ytics": "nomirror", "y2tics": ""]) { (_, new) in new }
-    let y1 = zip(titles, xy1s).map { t, xys in t + "\n" + separated(xys) }
-    let y2 = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys in t + " ,\n" + separated(xys) }
+    let y1: [String] = zip(titles, xy1s).map { t, xys -> String in t + "\n" + separated(xys) }
+    let y2: [String] = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys -> String in t + " ,\n" + separated(xys) }
     self.datablock = "\n$data <<EOD\n" + y1.joined(separator: "\n\n\n") + (xy2s.isEmpty ? "" : "\n\n\n") + y2.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
     let (s, l) = style.raw
     self.defaultPlot = "plot " +
       xy1s.indices
-      .map { i in
+      .map { i -> String in
         if (xy1s[i].first?.count ?? 0) > 1 {
           return (2...xy1s[i][0].count).map { c in "$data i \(i) u 1:\(c) \(s) axes x1y1 w \(l) ls \(i+c+9) title columnheader(1)" }.joined(separator: ", \\\n")
         } else {
@@ -342,7 +342,7 @@ public final class Gnuplot: CustomStringConvertible {
       }
       .joined(separator: ", \\\n") + ", \\\n"
       + xy2s.indices
-      .map { i in
+      .map { i -> String in
         if (xy2s[i].first?.count ?? 0) > 1 {
           return (2...xy2s[i][0].count).map { c in "$data i \(i + xy1s.endIndex) u 1:\(c) \(s) axes x1y2 w \(l) ls \(i+c+19) title columnheader(1)" }.joined(separator: ", \\\n")
         } else {
