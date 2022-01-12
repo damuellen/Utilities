@@ -138,7 +138,7 @@ extension Array where Element == Double {
 }
 
 private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
-  let power = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14]
+  let power = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17]
   var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
   while true {
