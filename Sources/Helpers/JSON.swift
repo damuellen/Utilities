@@ -26,12 +26,12 @@ extension Decodable {
   public static func decodeFromJSON(data: Data) throws -> Self {
     return try JSONDecoder.shared.decode(Self.self, from: data)
   }
-  
+
   public static func loadFromJSON(file: URL) throws -> Self {
     let data = try Data(contentsOf: file)
     return try decodeFromJSON(data: data)
   }
-  
+
   public static func loadFromJSONIfExists(file: URL) throws -> Self? {
     guard FileManager.default.fileExists(atPath: file.path) else { return nil }
     return try loadFromJSON(file: file)
@@ -43,7 +43,7 @@ extension Encodable {
     let data = try JSONEncoder.shared.encode(self)
     return String(decoding: data, as: Unicode.UTF8.self)
   }
-  
+
   public func storeToJSON(file: URL) throws {
     let data = try JSONEncoder.shared.encode(self)
     let dir = file.deletingLastPathComponent()

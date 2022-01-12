@@ -8,8 +8,8 @@
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
 
-import Libc
 import Helpers
+import Libc
 
 public typealias Heat = Double
 public typealias Pressure = Double
@@ -88,7 +88,7 @@ public let HELISOL_XLP = HeatTransferFluid(
 /// freeze temperature, specific heat capacity, viscosity, thermal conductivity,
 /// enthalpy, and density as a function of temperature.
 public struct HeatTransferFluid: CustomStringConvertible, Equatable {
-  /// Product designation 
+  /// Product designation
   public let name: String
   /// Freezing point
   public let freezeTemperature: Temperature
@@ -141,7 +141,8 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
   }
 
   public func temperature(_ heat: Heat, _ t: Temperature) -> Temperature {
-    let degree: Double = useEnthalpy
+    let degree: Double =
+      useEnthalpy
       ? temperature(enthalpy: heat, degree: t.celsius)
       : temperature(specificHeat: heat, degree: t.celsius)
     return Temperature(celsius: degree)
@@ -162,7 +163,8 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
 
   public func temperature(_ enthalpy: Double) -> Temperature {
     let celsius = temperatureFromEnthalpy.callAsFunction(enthalpy)
-    precondition(celsius > freezeTemperature.celsius,
+    precondition(
+      celsius > freezeTemperature.celsius,
       "Fell below freezing point.\n")
     return Temperature(celsius: celsius)
   }
@@ -171,13 +173,13 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
     let t = degree
     let cp = heatCapacity
     if cp[1] > 0 {
-      return (
-        (2 * specificHeat + 2 * cp[0] * t) / cp[1] + t * t
-          + (cp[0] / cp[1]) * (cp[0] / cp[1])).squareRoot() - cp[0] / cp[1]
+      return
+        ((2 * specificHeat + 2 * cp[0] * t) / cp[1] + t * t
+        + (cp[0] / cp[1]) * (cp[0] / cp[1])).squareRoot() - cp[0] / cp[1]
     } else {
-      return -(
-        (2 * specificHeat + 2 * cp[0] * t) / cp[1] + t * t
-          + (cp[0] / cp[1]) * (cp[0] / cp[1])).squareRoot() - cp[0] / cp[1]
+      return
+        -((2 * specificHeat + 2 * cp[0] * t) / cp[1] + t * t
+        + (cp[0] / cp[1]) * (cp[0] / cp[1])).squareRoot() - cp[0] / cp[1]
     }
   }
 
@@ -189,16 +191,16 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
   }
 
   static func change(
-    from high: Double, to low: Double, heatCapacity: [Double]) -> Double
-  {
+    from high: Double, to low: Double, heatCapacity: [Double]
+  ) -> Double {
     var q = heatCapacity[0] * (high - low)
     q += heatCapacity[1] / 2 * (high * high - low * low)
     return q
   }
 
   static func change(
-    from high: Double, to low: Double, enthalpy: [Double]) -> Double
-  {
+    from high: Double, to low: Double, enthalpy: [Double]
+  ) -> Double {
     var (h1, h2) = (0.0, 0.0)
     for (i, c) in enthalpy.enumerated() {
       h1 += c * pow(low, Double(i))
@@ -209,25 +211,25 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
 
   public var description: String {
     "Description:" * name
-    + "Freezing Point [°C]:" * freezeTemperature.celsius.description
-    + "Specific Heat as a Function of Temperature; cp(T) = c0+c1*T\n"
-    + "c0:" * heatCapacity[0].description
-    + "c1:" * heatCapacity[1].description
-    + "Calculate with Enthalpy:" * (useEnthalpy ? "YES" : "NO")
-    + (enthalpyFromTemperature.isEmpty == false ?
-    "Enthalpy as function on Temperature"
-    + "\n\(enthalpyFromTemperature)" : "")
-    + (temperatureFromEnthalpy.isEmpty == false ?
-    "Temperature as function on Enthalpy"
-    + "\n\(temperatureFromEnthalpy)" : "")
-    + "Density as a Function of Temperature; roh(T) = c0+c1*T+c1*T^2"
-    + "\n\(Polynomial(density))"
-    + "Viscosity as a Function of Temperature; eta(T) = c0+c1*T+c1*T^2"
-    + "\n\(Polynomial(viscosity))"
-    + "Conductivity as a Function of Temperature; lamda(T) = c0+c1*T+c1*T^2"
-    + "\n\(Polynomial(thermCon))"
-    + "Maximum Operating Temperature [°C]:"
-    * maxTemperature.celsius.description
+      + "Freezing Point [°C]:" * freezeTemperature.celsius.description
+      + "Specific Heat as a Function of Temperature; cp(T) = c0+c1*T\n"
+      + "c0:" * heatCapacity[0].description
+      + "c1:" * heatCapacity[1].description
+      + "Calculate with Enthalpy:" * (useEnthalpy ? "YES" : "NO")
+      + (enthalpyFromTemperature.isEmpty == false
+        ? "Enthalpy as function on Temperature"
+          + "\n\(enthalpyFromTemperature)" : "")
+      + (temperatureFromEnthalpy.isEmpty == false
+        ? "Temperature as function on Enthalpy"
+          + "\n\(temperatureFromEnthalpy)" : "")
+      + "Density as a Function of Temperature; roh(T) = c0+c1*T+c1*T^2"
+      + "\n\(Polynomial(density))"
+      + "Viscosity as a Function of Temperature; eta(T) = c0+c1*T+c1*T^2"
+      + "\n\(Polynomial(viscosity))"
+      + "Conductivity as a Function of Temperature; lamda(T) = c0+c1*T+c1*T^2"
+      + "\n\(Polynomial(thermCon))"
+      + "Maximum Operating Temperature [°C]:"
+      * maxTemperature.celsius.description
   }
 }
 

@@ -21,20 +21,21 @@ public struct CSV {
 
   public var head: String { peek(0..<min(30, dataRows.endIndex)) }
 
-  public var tail: String { 
+  public var tail: String {
     if dataRows.count > 30 {
-      return peek(dataRows.endIndex-30..<dataRows.endIndex) 
+      return peek(dataRows.endIndex - 30..<dataRows.endIndex)
     }
-    return peek(0..<dataRows.endIndex) 
+    return peek(0..<dataRows.endIndex)
   }
 
   public func peek(_ range: Array<Any>.Indices) -> String {
     if let headerRow = headerRow {
-      let minWidth = headerRow.map{$0.count}.max() ?? 1
+      let minWidth = headerRow.map { $0.count }.max() ?? 1
       let formatted = Array.justified(dataRows[range], minWidth: minWidth)
-      let width = (terminalWidth() / formatted.1+1) * formatted.1+1
-      return String(headerRow.map { $0.leftpad(length: formatted.1) }
-        .joined(separator: " ").prefix(width)) + "\n" + formatted.0
+      let width = (terminalWidth() / formatted.1 + 1) * formatted.1 + 1
+      return String(
+        headerRow.map { $0.leftpad(length: formatted.1) }
+          .joined(separator: " ").prefix(width)) + "\n" + formatted.0
     }
     return Array.justified(dataRows[range]).0
   }
@@ -53,7 +54,7 @@ public struct CSV {
   }
 
   public subscript(column c: Int) -> [Double] {
-    return Array<Double>(unsafeUninitializedCapacity: dataRows.count) {
+    return [Double](unsafeUninitializedCapacity: dataRows.count) {
       uninitializedMemory, resultCount in
       resultCount = dataRows.count
       for i in dataRows.indices {
@@ -82,15 +83,18 @@ public struct CSV {
     let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
     let hasHeader = data[..<end].contains(where: isLetter)
     let start = hasHeader ? data.index(after: firstNewLine) : data.startIndex
-    self.headerRow = !hasHeader ? nil : data[..<end].split(separator: separator).map { slice in
-      String(decoding: slice.filter(isSpace), as: UTF8.self)
-    }
+    self.headerRow =
+      !hasHeader
+      ? nil
+      : data[..<end].split(separator: separator).map { slice in
+        String(decoding: slice.filter(isSpace), as: UTF8.self)
+      }
     #if DEBUG
-    if let headerRow = headerRow {
-      print("Header row detected.", headerRow)
-    } else {
-      print("No header.")
-    }
+      if let headerRow = headerRow {
+        print("Header row detected.", headerRow)
+      } else {
+        print("No header.")
+      }
     #endif
     self.dataRows = data[start...].withUnsafeBytes { content in
       content.split(separator: newLine).concurrentMap { line in
@@ -100,36 +104,41 @@ public struct CSV {
       }
     }
     #if DEBUG
-    if let headerRow = headerRow, dataRows[0].count != headerRow.count {
-      print("Header missing !")
-      print(dataRows[0])
-    }
+      if let headerRow = headerRow, dataRows[0].count != headerRow.count {
+        print("Header missing !")
+        print(dataRows[0])
+      }
     #endif
   }
 }
 
-public extension Array where Element == Double {
-  var formatted: String {
-    self.map{$0.description}.joined(separator: ", ")
-  }
-}
-
-public extension Array where Element == Double {
-  static func justified(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
-    let m = Int(array.map{$0.largest}.reduce(Double(minWidth), { Swift.max($0, $1) })).description.count
-    let width = (terminalWidth() / minWidth+1) * minWidth+1
-    return (array.map { row in
-      String(row.map { String(format: "%.1f", $0).leftpad(length: m+2) }.joined(separator: " ").prefix(width))
-    }.joined(separator: "\n"), m+2)
+extension Array where Element == Double {
+  public var formatted: String {
+    self.map { $0.description }.joined(separator: ", ")
   }
 }
 
 extension Array where Element == Double {
-  var largest: Double { self.map{$0.magnitude}.max() ?? 0 }
+  public static func justified(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
+    let m = Int(array.map { $0.largest }.reduce(Double(minWidth), { Swift.max($0, $1) }))
+      .description.count
+    let width = (terminalWidth() / minWidth + 1) * minWidth + 1
+    return (
+      array.map { row in
+        String(
+          row.map { String(format: "%.1f", $0).leftpad(length: m + 2) }.joined(separator: " ")
+            .prefix(width))
+      }.joined(separator: "\n"), m + 2
+    )
+  }
+}
+
+extension Array where Element == Double {
+  var largest: Double { self.map { $0.magnitude }.max() ?? 0 }
 }
 
 private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
-  let power = [1.0,1e1,1e2,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14]
+  let power = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14]
   var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
   while true {
@@ -153,13 +162,15 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
         p = p.successor()
         n += 1
       }
-      r += f / power[n] // Here be dragons.
+      r += f / power[n]  // Here be dragons.
     }
     if neg { a.append(-r) } else { a.append(r) }
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
     if p.pointee == separator {
       p = p.successor()
-    } else { break }
+    } else {
+      break
+    }
   }
   return a
 }

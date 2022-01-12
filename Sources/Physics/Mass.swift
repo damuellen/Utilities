@@ -17,7 +17,7 @@ public struct Mass: Codable, CustomStringConvertible {
     String(format: "%.1ft", kg / 1_000)
   }
   /// Returns the kilograms unit of mass.
-  public var kg: Double 
+  public var kg: Double
 
   public init(_ kg: Double) {
     self.kg = kg

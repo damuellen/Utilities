@@ -8,8 +8,8 @@
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
 
-import Libc
 import Helpers
+import Libc
 
 /// Represents a polynomial function, e.g. `2 + 3x + 4x²`.
 public struct Polynomial: Codable, Equatable {
@@ -72,12 +72,14 @@ extension Polynomial: CustomStringConvertible {
 
 extension Polynomial {
   // https://github.com/OrbitalCalculations/hpnaff/blob/fdc8f01372b7632d8571b049a29d5b64c8fb1aee/Sources/hpNaff/Polynomial.swift#L98
-  public static func fit<S: Collection>(x dependentValues: S, y independentValues: S, order: Int = 4) -> Polynomial? where S.Element == Double {
+  public static func fit<S: Collection>(
+    x dependentValues: S, y independentValues: S, order: Int = 4
+  ) -> Polynomial? where S.Element == Double {
     let dependentValues = Array(dependentValues)
     let independentValues = Array(independentValues)
     var B = [Double](repeating: 0.0, count: order + 1)
-    var P = [Double](repeating: 0.0, count: ((order+1) * 2)+1)
-    var A = [Double](repeating: 0.0, count: (order + 1)*2*(order + 1))
+    var P = [Double](repeating: 0.0, count: ((order + 1) * 2) + 1)
+    var A = [Double](repeating: 0.0, count: (order + 1) * 2 * (order + 1))
     var coefficients = [Double](repeating: 0.0, count: order + 1)
 
     // Verify initial conditions....
@@ -85,13 +87,13 @@ extension Polynomial {
     // (order+1)
 
     let countOfElements = dependentValues.count
-    guard (countOfElements > order) else { return nil }
+    guard countOfElements > order else { return nil }
 
     // This method has imposed an arbitrary bound of
     // order <= maxOrder.  Increase maxOrder if necessary.
     let maxOrder = 6
-    guard (order <= maxOrder) else { return nil }
-    
+    guard order <= maxOrder else { return nil }
+
     // Identify the column vector
     for ii in 0..<countOfElements {
       let x = dependentValues[ii]
@@ -108,22 +110,22 @@ extension Polynomial {
 
     // Compute the sum of the Powers of X
     for ii in 0..<countOfElements {
-      let x    = dependentValues[ii]
+      let x = dependentValues[ii]
       var powx = dependentValues[ii]
 
-      for jj in 1 ..< ((2 * (order + 1)) + 1) {
-            P[jj] = P[jj] + powx
-            powx  *= x
-        }
+      for jj in 1..<((2 * (order + 1)) + 1) {
+        P[jj] = P[jj] + powx
+        powx *= x
+      }
     }
 
     // Initialize the reduction matrix
     //
     for ii in 0..<(order + 1) {
       for jj in 0..<(order + 1) {
-        A[(ii * (2 * (order + 1))) + jj] = P[ii+jj];
+        A[(ii * (2 * (order + 1))) + jj] = P[ii + jj]
       }
-      A[(ii*(2 * (order + 1))) + (ii + (order + 1))] = 1.0
+      A[(ii * (2 * (order + 1))) + (ii + (order + 1))] = 1.0
     }
 
     // Move the Identity matrix portion of the redux matrix
@@ -131,18 +133,17 @@ extension Polynomial {
     // of the redux matrix
     for ii in 0..<(order + 1) {
       let x = A[(ii * (2 * (order + 1))) + ii]
-      if (x != 0.0) {
+      if x != 0.0 {
         for kk in 0..<(2 * (order + 1)) {
           A[(ii * (2 * (order + 1))) + kk] =
-                    A[(ii * (2 * (order + 1))) + kk] / x
+            A[(ii * (2 * (order + 1))) + kk] / x
         }
-        for jj  in 0..<(order + 1) {
-          if ((jj - ii) != 0) {
+        for jj in 0..<(order + 1) {
+          if (jj - ii) != 0 {
             let y = A[(jj * (2 * (order + 1))) + ii]
             for kk in 0..<(2 * (order + 1)) {
               A[(jj * (2 * (order + 1))) + kk] =
-                  A[(jj * (2 * (order + 1))) + kk] -
-                  y * A[(ii * (2 * (order + 1))) + kk]
+                A[(jj * (2 * (order + 1))) + kk] - y * A[(ii * (2 * (order + 1))) + kk]
             }
           }
         }
@@ -172,7 +173,7 @@ public struct Ratio: CustomStringConvertible, Codable {
 
   public var percentage: Double { quotient * 100.0 }
 
-  public var description: String { 
+  public var description: String {
     String(format: "%3.1f", percentage) + "%"
   }
 
@@ -218,11 +219,12 @@ extension Ratio {
     let (bar_chunks, remainder) = Int(quotient * 80)
       .quotientAndRemainder(dividingBy: 8)
     let full = UnicodeScalar("█").value
-    let fractionalPart = remainder > 0
+    let fractionalPart =
+      remainder > 0
       ? String(UnicodeScalar(full + UInt32(8 - remainder))!) : ""
     return String(repeating: "█", count: bar_chunks)
-      + fractionalPart 
-      + String(repeating: " ", count: 10 - bar_chunks) 
+      + fractionalPart
+      + String(repeating: " ", count: 10 - bar_chunks)
       + description
   }
 

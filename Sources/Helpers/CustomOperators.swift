@@ -18,12 +18,12 @@ precedencegroup ExponentiationPrecedence {
 infix operator **: ExponentiationPrecedence
 infix operator **=: AssignmentPrecedence
 
-public extension Double {
-  static func ** (lhs: Double, rhs: Double) -> Double {
+extension Double {
+  public static func ** (lhs: Double, rhs: Double) -> Double {
     return pow(lhs, rhs)
   }
 
-  static func **= (lhs: inout Double, rhs: Double) {
+  public static func **= (lhs: inout Double, rhs: Double) {
     lhs = lhs ** rhs
   }
 }
@@ -38,6 +38,6 @@ public func * (lhs: String, rhs: String) -> String {
 
 infix operator |>
 
-public func |> <T, U>(value: T, function: ((T)-> U)) -> U {
-    return function(value)
+public func |> <T, U>(value: T, function: ((T) -> U)) -> U {
+  return function(value)
 }

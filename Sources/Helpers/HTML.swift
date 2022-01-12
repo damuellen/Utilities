@@ -9,8 +9,9 @@
 //
 
 import Foundation
+
 #if os(Windows)
-import WinSDK
+  import WinSDK
 #endif
 
 /// A representation of an HTML document.
@@ -23,26 +24,26 @@ public struct HTML: CustomStringConvertible {
   /// Create a pdf file from the document.
   public func pdf(toFile name: String) throws {
     #if os(Windows) || os(Linux)
-    let html = URL.temporaryFile().appendingPathExtension("html")
-    try data.write(to: html)
-    let path = html.path
-    let wkhtmltopdf = Process()
-    wkhtmltopdf.arguments = [
-      "--quiet", "--print-media-type", "--disable-smart-shrinking",
-      "-L", "0", "-R", "0", "-T", "0", "-B", "0",
-      "-O", "Landscape", "--dpi", "600", path, name
-    ]
-    #if os(Windows)
-    wkhtmltopdf.executableURL = "C:/bin/wkhtmltopdf.exe"
-    #else
-    wkhtmltopdf.executableURL = "/usr/local/bin/wkhtmltopdf"
-    #endif
-    try wkhtmltopdf.run()
-    wkhtmltopdf.waitUntilExit()
-    try html.removeItem()
+      let html = URL.temporaryFile().appendingPathExtension("html")
+      try data.write(to: html)
+      let path = html.path
+      let wkhtmltopdf = Process()
+      wkhtmltopdf.arguments = [
+        "--quiet", "--print-media-type", "--disable-smart-shrinking",
+        "-L", "0", "-R", "0", "-T", "0", "-B", "0",
+        "-O", "Landscape", "--dpi", "600", path, name,
+      ]
+      #if os(Windows)
+        wkhtmltopdf.executableURL = "C:/bin/wkhtmltopdf.exe"
+      #else
+        wkhtmltopdf.executableURL = "/usr/local/bin/wkhtmltopdf"
+      #endif
+      try wkhtmltopdf.run()
+      wkhtmltopdf.waitUntilExit()
+      try html.removeItem()
     #endif
   }
-  
+
   /// Creates an HTML document with the given body.
   public init(body: String? = nil, refresh: Int = 0) {
     if let content = body {
@@ -50,27 +51,30 @@ public struct HTML: CustomStringConvertible {
     } else {
       self.bodyContent = [lazySVG, coffeeSVG, sleepSVG].randomElement()!
     }
-    self.meta = "<meta charset=\"utf-8\">\n" + ((refresh > 0) ? """
-    <meta http-equiv=\"refresh\" content=\"\(refresh)\">
-    <style type="text/css">
-       @keyframes move {
-        0%   { opacity:0; transform: translateY(-100%); }
-        15%  { opacity:1; transform: none; }
-        80%  { opacity:1; }
-        95%  { opacity:0; }
-        100% { opacity:0; }
-    }
-    #Layer_1 {
-        opacity:0;
-        animation: move \(refresh)s;
-    }
-    </style>
-    """ : "")
+    self.meta =
+      "<meta charset=\"utf-8\">\n"
+      + ((refresh > 0)
+        ? """
+        <meta http-equiv=\"refresh\" content=\"\(refresh)\">
+        <style type="text/css">
+           @keyframes move {
+            0%   { opacity:0; transform: translateY(-100%); }
+            15%  { opacity:1; transform: none; }
+            80%  { opacity:1; }
+            95%  { opacity:0; }
+            100% { opacity:0; }
+        }
+        #Layer_1 {
+            opacity:0;
+            animation: move \(refresh)s;
+        }
+        </style>
+        """ : "")
   }
-  
+
   public mutating func add(body: String) {
     bodyContent.append(body)
-  } 
+  }
   /// Optional json content to be rendered.
   public var json: String? = nil
 
@@ -78,7 +82,7 @@ public struct HTML: CustomStringConvertible {
 
   private let type = "<!DOCTYPE html>\n"
   private let meta: String
-  
+
   private let lazySVG = """
     <svg id=Layer_1 style="enable-background:new 0 0 511.995 511.995" version=1.1 viewBox="0 0 511.995 511.995" x=0px y=0px xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:xlink=http://www.w3.org/1999/xlink><g><g><path d="M496.291,252.216H366.089c0.646-1.679,1.113-3.454,1.323-5.325c1.321-11.787-7.163-22.412-18.95-23.732l-99.572-11.156
       c-6.069-0.682-12.142,1.257-16.697,5.325l-33.62,30.03l-38.949-86.367l35.459-79.849c4.996-11.251-4.001-23.746-16.266-22.568
@@ -99,7 +103,7 @@ public struct HTML: CustomStringConvertible {
       c5.205,0,9.425-4.22,9.425-9.425C480.582,163.627,476.362,159.408,471.157,159.408z"/></g></g><g><g><path d="M471.157,129.18h-72.112c-5.205,0-9.425,4.22-9.425,9.425c0,5.205,4.22,9.425,9.425,9.425h72.112
       c5.205,0,9.425-4.22,9.425-9.425C480.582,133.4,476.362,129.18,471.157,129.18z"/></g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g></svg>
     """
-  
+
   private let sleepSVG = """
     <svg id=Layer_1 style="enable-background:new 0 0 512 512" version=1.1 viewBox="0 0 512 512" x=0px y=0px xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:xlink=http://www.w3.org/1999/xlink><g><g><circle cx=287.146 cy=157.427 r=44.386 /></g></g><g><g><path d="M495.354,261.85c-8.193,0-154.733,0-162.055,0c3.7-3.747,5.943-8.923,5.806-14.603
     c-0.265-11.103-9.508-19.918-20.585-19.622l-69.543,1.665l-38.271-54.704l29.287,24.491c-1.544-2.3-30.916-38.075-30.004-36.96
@@ -124,7 +128,7 @@ public struct HTML: CustomStringConvertible {
     c-0.932,0-1.327,0.989-1.327,1.92c0,1.018,0.481,1.921,1.327,1.921h6.552L454.5,54.851c-0.311,0.536-0.481,1.102-0.481,1.554
     c0,0.677,0.367,1.157,1.272,1.157h12.032c0.848,0,1.327-1.016,1.327-1.92C468.65,54.739,468.17,53.721,467.323,53.721z"/></g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g></svg>
     """
-  
+
   private let coffeeSVG = """
     <svg id=Layer_1 style="enable-background:new 0 0 512 512" version=1.1 viewBox="0 0 512 512" x=0px y=0px xml:space=preserve xmlns=http://www.w3.org/2000/svg xmlns:xlink=http://www.w3.org/1999/xlink><g><g><path d="M387.494,160.117c-5.373-2.946-12.119-0.977-15.065,4.4l-33.463,61.077h-38.141c2.123-3.699,3.109-8.088,2.503-12.642
     c-1.467-11.009-11.585-18.745-22.59-17.276l-52.064,6.938c-11.069,32.174-11.355,36.036-18.903,43.092l58.002-7.729
@@ -149,7 +153,7 @@ public struct HTML: CustomStringConvertible {
     c5.517,0,9.988-4.471,9.988-9.988S499.457,171.11,493.94,171.11z"/></g></g><g><g><path d="M493.94,142.626h-76.417c-5.517,0-9.988,4.471-9.988,9.988s4.471,9.988,9.988,9.988h76.417
     c5.517,0,9.988-4.471,9.988-9.988S499.457,142.626,493.94,142.626z"/></g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g></svg>
     """
-  
+
   private let style = """
     <style media="print">
       svg { 
@@ -192,8 +196,10 @@ public struct HTML: CustomStringConvertible {
   private var raw: String {
     let head = "<html lang=\"en\"><head>" + meta + style + "</head>\n<body>\n"
     let tail = "</body>\n</html>\n"
-    let full = "<button onclick=\"window.stop(); document.documentElement.requestFullscreen();\" style=\"position: fixed; left: 8px; top: 8px; z-index: 1;\">Fullscreen</button>\n"
-    let cancel = "<a href=\"/cancel\"><button style=\"position: fixed; right: 8px; top: 8px; z-index: 1;\">Cancel</button></a>\n"
+    let full =
+      "<button onclick=\"window.stop(); document.documentElement.requestFullscreen();\" style=\"position: fixed; left: 8px; top: 8px; z-index: 1;\">Fullscreen</button>\n"
+    let cancel =
+      "<a href=\"/cancel\"><button style=\"position: fixed; right: 8px; top: 8px; z-index: 1;\">Cancel</button></a>\n"
     if let json = json {
       return type + head + cancel + full + bodyContent + script + json + ")</script>" + tail
     }

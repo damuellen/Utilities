@@ -9,8 +9,9 @@
 //
 
 import Foundation
+
 #if canImport(FoundationXML)
-import FoundationXML
+  import FoundationXML
 #endif
 public enum XMLParseError: Error { case unexpectedError }
 
@@ -55,7 +56,7 @@ public final class XML {
   func addChildren(_ xmls: [XML]) { xmls.forEach { self.addChild($0) } }
 }
 
-fileprivate class Parser: NSObject, XMLParserDelegate {
+private class Parser: NSObject, XMLParserDelegate {
   var root: XML?
   private let data: Data
   private weak var currentElement: XML?

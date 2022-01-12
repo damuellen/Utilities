@@ -12,32 +12,33 @@ import Dispatch
 import Foundation
 
 #if canImport(CRT)
-import CRT
-import WinSDK
+  import CRT
+  import WinSDK
 #elseif canImport(Darwin)
-import Darwin
+  import Darwin
 #elseif canImport(Glibc)
-import Glibc
+  import Glibc
 #endif
 
 #if !os(Windows)
-typealias SOCKET = Int32
+  typealias SOCKET = Int32
 #endif
 
 public class HTTP {
   public init(handler: @escaping (Request) -> Response) { self.handler = handler }
-  
+
   public let handler: (Request) -> Response
   private static let staticSyncQ = DispatchQueue(label: "com.http.server.StaticSyncQ")
-  private static var dispatchQueue = DispatchQueue(label: "com.http.server.queue", qos: .userInteractive)
+  private static var dispatchQueue = DispatchQueue(
+    label: "com.http.server.queue", qos: .userInteractive)
   private static var _serverActive = false
   private static var server: Server? = nil
-  
+
   static var serverActive: Bool {
     get { return staticSyncQ.sync { _serverActive } }
     set { staticSyncQ.sync { _serverActive = newValue } }
   }
-  
+
   public func start() {
     func runServer() throws {
       if HTTP.serverActive { return }
@@ -72,23 +73,30 @@ public struct Headers {
 extension UInt16 { public init(networkByteOrder input: UInt16) { self.init(bigEndian: input) } }
 
 class TCPSocket: CustomStringConvertible {
-#if !os(Windows)
-#if os(Linux) || os(Android) || os(FreeBSD)
-  private let sendFlags = CInt(MSG_NOSIGNAL)
-#else
-  private let sendFlags = CInt(0)
-#endif
-#endif
-  var description: String { return "TCPSocket @ 0x" + String(unsafeBitCast(self, to: UInt.self), radix: 16) }
+  #if !os(Windows)
+    #if os(Linux) || os(Android) || os(FreeBSD)
+      private let sendFlags = CInt(MSG_NOSIGNAL)
+    #else
+      private let sendFlags = CInt(0)
+    #endif
+  #endif
+  var description: String {
+    return "TCPSocket @ 0x" + String(unsafeBitCast(self, to: UInt.self), radix: 16)
+  }
   let listening: Bool
   private var socket: SOCKET!
   private var socketAddress = UnsafeMutablePointer<sockaddr_in>.allocate(capacity: 1)
   public private(set) var port: UInt16
   private func isNotNegative(r: CInt) -> Bool { return r != -1 }
   private func isZero(r: CInt) -> Bool { return r == 0 }
-  private func attempt<T>(_ name: String, file: String = #file, line: UInt = #line, valid: (T) -> Bool, _ b: @autoclosure () -> T) throws -> T {
+  private func attempt<T>(
+    _ name: String, file: String = #file, line: UInt = #line, valid: (T) -> Bool,
+    _ b: @autoclosure () -> T
+  ) throws -> T {
     let r = b()
-    guard valid(r) else { throw HTTP.ServerError(operation: name, errno: errno, file: file, line: line) }
+    guard valid(r) else {
+      throw HTTP.ServerError(operation: name, errno: errno, file: file, line: line)
+    }
     return r
   }
   init(socket: SOCKET) {
@@ -99,25 +107,34 @@ class TCPSocket: CustomStringConvertible {
   init(port: UInt16?) throws {
     listening = true
     self.port = 0
-#if os(Windows)
-    socket = try attempt("WSASocketW", valid: { $0 != INVALID_SOCKET }, WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP.rawValue, nil, 0, DWORD(WSA_FLAG_OVERLAPPED)))
-    var value: Int8 = 1
-    _ = try attempt("setsockopt", valid: { $0 == 0 }, setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &value, Int32(MemoryLayout.size(ofValue: value))))
-#else
-#if os(Linux) && !os(Android)
-    let SOCKSTREAM = Int32(SOCK_STREAM.rawValue)
-#else
-    let SOCKSTREAM = SOCK_STREAM
-#endif
-#if canImport(Darwin)
-    socket = try attempt("socket", valid: { $0 >= 0 }, Darwin.socket(AF_INET, SOCKSTREAM, Int32(IPPROTO_TCP)))
-#else
-    socket = try attempt("socket", valid: { $0 >= 0 }, SwiftGlibc.socket(AF_INET, SOCKSTREAM, Int32(IPPROTO_TCP)))
-#endif
-    
-    var on: CInt = 1
-    _ = try attempt("setsockopt", valid: { $0 == 0 }, setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, socklen_t(MemoryLayout<CInt>.size)))
-#endif
+    #if os(Windows)
+      socket = try attempt(
+        "WSASocketW", valid: { $0 != INVALID_SOCKET },
+        WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP.rawValue, nil, 0, DWORD(WSA_FLAG_OVERLAPPED)))
+      var value: Int8 = 1
+      _ = try attempt(
+        "setsockopt", valid: { $0 == 0 },
+        setsockopt(
+          socket, SOL_SOCKET, SO_REUSEADDR, &value, Int32(MemoryLayout.size(ofValue: value))))
+    #else
+      #if os(Linux) && !os(Android)
+        let SOCKSTREAM = Int32(SOCK_STREAM.rawValue)
+      #else
+        let SOCKSTREAM = SOCK_STREAM
+      #endif
+      #if canImport(Darwin)
+        socket = try attempt(
+          "socket", valid: { $0 >= 0 }, Darwin.socket(AF_INET, SOCKSTREAM, Int32(IPPROTO_TCP)))
+      #else
+        socket = try attempt(
+          "socket", valid: { $0 >= 0 }, SwiftGlibc.socket(AF_INET, SOCKSTREAM, Int32(IPPROTO_TCP)))
+      #endif
+
+      var on: CInt = 1
+      _ = try attempt(
+        "setsockopt", valid: { $0 == 0 },
+        setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, socklen_t(MemoryLayout<CInt>.size)))
+    #endif
     let sa = createSockaddr(port)
     socketAddress.initialize(to: sa)
     try socketAddress.withMemoryRebound(
@@ -125,13 +142,15 @@ class TCPSocket: CustomStringConvertible {
       capacity: MemoryLayout<sockaddr>.size,
       {
         let addr = UnsafePointer<sockaddr>($0)
-        _ = try attempt("bind", valid: isZero, bind(socket, addr, socklen_t(MemoryLayout<sockaddr>.size)))
+        _ = try attempt(
+          "bind", valid: isZero, bind(socket, addr, socklen_t(MemoryLayout<sockaddr>.size)))
         _ = try attempt("listen", valid: isZero, listen(socket, SOMAXCONN))
       }
     )
     var actualSA = sockaddr_in()
     withUnsafeMutablePointer(to: &actualSA) { ptr in
-      ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { (ptr: UnsafeMutablePointer<sockaddr>) in var len = socklen_t(MemoryLayout<sockaddr>.size)
+      ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+        (ptr: UnsafeMutablePointer<sockaddr>) in var len = socklen_t(MemoryLayout<sockaddr>.size)
         getsockname(socket, ptr, &len)
       }
     }
@@ -140,15 +159,24 @@ class TCPSocket: CustomStringConvertible {
   private func createSockaddr(_ port: UInt16?) -> sockaddr_in {
     let addr = UInt32(INADDR_LOOPBACK).bigEndian
     let netPort = UInt16(bigEndian: port ?? 0)
-#if os(Android)
-    return sockaddr_in(sin_family: sa_family_t(AF_INET), sin_port: netPort, sin_addr: in_addr(s_addr: addr), __pad: (0, 0, 0, 0, 0, 0, 0, 0))
-#elseif os(Linux)
-    return sockaddr_in(sin_family: sa_family_t(AF_INET), sin_port: netPort, sin_addr: in_addr(s_addr: addr), sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
-#elseif os(Windows)
-    return sockaddr_in(sin_family: ADDRESS_FAMILY(AF_INET), sin_port: USHORT(netPort), sin_addr: IN_ADDR(S_un: in_addr.__Unnamed_union_S_un(S_addr: addr)), sin_zero: (CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0)))
-#else
-    return sockaddr_in(sin_len: 0, sin_family: sa_family_t(AF_INET), sin_port: netPort, sin_addr: in_addr(s_addr: addr), sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
-#endif
+    #if os(Android)
+      return sockaddr_in(
+        sin_family: sa_family_t(AF_INET), sin_port: netPort, sin_addr: in_addr(s_addr: addr),
+        __pad: (0, 0, 0, 0, 0, 0, 0, 0))
+    #elseif os(Linux)
+      return sockaddr_in(
+        sin_family: sa_family_t(AF_INET), sin_port: netPort, sin_addr: in_addr(s_addr: addr),
+        sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
+    #elseif os(Windows)
+      return sockaddr_in(
+        sin_family: ADDRESS_FAMILY(AF_INET), sin_port: USHORT(netPort),
+        sin_addr: IN_ADDR(S_un: in_addr.__Unnamed_union_S_un(S_addr: addr)),
+        sin_zero: (CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0)))
+    #else
+      return sockaddr_in(
+        sin_len: 0, sin_family: sa_family_t(AF_INET), sin_port: netPort,
+        sin_addr: in_addr(s_addr: addr), sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
+    #endif
   }
   func acceptConnection() throws -> TCPSocket {
     guard listening else { fatalError("Trying to listen on a client connection socket") }
@@ -158,19 +186,26 @@ class TCPSocket: CustomStringConvertible {
       {
         let addr = UnsafeMutablePointer<sockaddr>($0)
         var sockLen = socklen_t(MemoryLayout<sockaddr>.size)
-#if os(Windows)
-        let connectionSocket = try attempt("WSAAccept", valid: { $0 != INVALID_SOCKET }, WSAAccept(socket, addr, &sockLen, nil, 0))
-#else
-        let connectionSocket = try attempt("accept", valid: { $0 >= 0 }, accept(socket, addr, &sockLen))
-#endif
-#if canImport(Darwin)
-        // Disable SIGPIPEs when writing to closed sockets
-        var on: CInt = 1
-        guard setsockopt(connectionSocket, SOL_SOCKET, SO_NOSIGPIPE, &on, socklen_t(MemoryLayout<CInt>.size)) == 0 else {
-          close(connectionSocket)
-          throw HTTP.ServerError.init(operation: "setsockopt", errno: errno, file: #file, line: #line)
-        }
-#endif
+        #if os(Windows)
+          let connectionSocket = try attempt(
+            "WSAAccept", valid: { $0 != INVALID_SOCKET }, WSAAccept(socket, addr, &sockLen, nil, 0))
+        #else
+          let connectionSocket = try attempt(
+            "accept", valid: { $0 >= 0 }, accept(socket, addr, &sockLen))
+        #endif
+        #if canImport(Darwin)
+          // Disable SIGPIPEs when writing to closed sockets
+          var on: CInt = 1
+          guard
+            setsockopt(
+              connectionSocket, SOL_SOCKET, SO_NOSIGPIPE, &on, socklen_t(MemoryLayout<CInt>.size))
+              == 0
+          else {
+            close(connectionSocket)
+            throw HTTP.ServerError.init(
+              operation: "setsockopt", errno: errno, file: #file, line: #line)
+          }
+        #endif
         return connectionSocket
       }
     )
@@ -179,31 +214,42 @@ class TCPSocket: CustomStringConvertible {
   func readData() throws -> Data? {
     guard let connectionSocket = socket else { throw InternalServerError.socketAlreadyClosed }
     var buffer = [CChar](repeating: 0, count: 4096)
-#if os(Windows)
-    var dwNumberOfBytesRecieved: DWORD = 0
-    try buffer.withUnsafeMutableBufferPointer {
-      var wsaBuffer: WSABUF = WSABUF(len: ULONG($0.count), buf: $0.baseAddress)
-      var flags: DWORD = 0
-      _ = try attempt("WSARecv", valid: { $0 != SOCKET_ERROR }, WSARecv(connectionSocket, &wsaBuffer, 1, &dwNumberOfBytesRecieved, &flags, nil, nil))
-    }
-    let length = Int(dwNumberOfBytesRecieved)
-#else
-    let length = try attempt("read", valid: { $0 >= 0 }, read(connectionSocket, &buffer, buffer.count))
-#endif
+    #if os(Windows)
+      var dwNumberOfBytesRecieved: DWORD = 0
+      try buffer.withUnsafeMutableBufferPointer {
+        var wsaBuffer: WSABUF = WSABUF(len: ULONG($0.count), buf: $0.baseAddress)
+        var flags: DWORD = 0
+        _ = try attempt(
+          "WSARecv", valid: { $0 != SOCKET_ERROR },
+          WSARecv(connectionSocket, &wsaBuffer, 1, &dwNumberOfBytesRecieved, &flags, nil, nil))
+      }
+      let length = Int(dwNumberOfBytesRecieved)
+    #else
+      let length = try attempt(
+        "read", valid: { $0 >= 0 }, read(connectionSocket, &buffer, buffer.count))
+    #endif
     guard length > 0 else { return nil }
     return Data(bytes: buffer, count: length)
   }
   func writeRawData(_ data: Data) throws {
     guard let connectionSocket = socket else { throw InternalServerError.socketAlreadyClosed }
-#if os(Windows)
-    _ = try data.withUnsafeBytes {
-      var dwNumberOfBytesSent: DWORD = 0
-      var wsaBuffer: WSABUF = WSABUF(len: ULONG(data.count), buf: UnsafeMutablePointer<CHAR>(mutating: $0.bindMemory(to: CHAR.self).baseAddress))
-      _ = try attempt("WSASend", valid: { $0 != SOCKET_ERROR }, WSASend(connectionSocket, &wsaBuffer, 1, &dwNumberOfBytesSent, 0, nil, nil))
-    }
-#else
-    _ = try data.withUnsafeBytes { ptr in try attempt("send", valid: { $0 == data.count }, CInt(send(connectionSocket, ptr.baseAddress!, data.count, sendFlags))) }
-#endif
+    #if os(Windows)
+      _ = try data.withUnsafeBytes {
+        var dwNumberOfBytesSent: DWORD = 0
+        var wsaBuffer: WSABUF = WSABUF(
+          len: ULONG(data.count),
+          buf: UnsafeMutablePointer<CHAR>(mutating: $0.bindMemory(to: CHAR.self).baseAddress))
+        _ = try attempt(
+          "WSASend", valid: { $0 != SOCKET_ERROR },
+          WSASend(connectionSocket, &wsaBuffer, 1, &dwNumberOfBytesSent, 0, nil, nil))
+      }
+    #else
+      _ = try data.withUnsafeBytes { ptr in
+        try attempt(
+          "send", valid: { $0 == data.count },
+          CInt(send(connectionSocket, ptr.baseAddress!, data.count, sendFlags)))
+      }
+    #endif
   }
   func writeData(header: String, bodyData: Data) throws {
     var totalData = Data(header.utf8)
@@ -212,23 +258,25 @@ class TCPSocket: CustomStringConvertible {
   }
   func closeSocket() throws {
     guard socket != nil else { return }
-#if os(Windows)
-    if listening { shutdown(socket, SD_BOTH) }
-    closesocket(socket)
-#else
-    if listening { shutdown(socket, CInt(SHUT_RDWR)) }
-    close(socket)
-#endif
+    #if os(Windows)
+      if listening { shutdown(socket, SD_BOTH) }
+      closesocket(socket)
+    #else
+      if listening { shutdown(socket, CInt(SHUT_RDWR)) }
+      close(socket)
+    #endif
     socket = nil
   }
   deinit { try? closeSocket() }
 }
 
 extension HTTP {
-  
+
   class Server: CustomStringConvertible {
-    public var description: String { return "HTTPServer @ 0x" + String(unsafeBitCast(self, to: UInt.self), radix: 16) }
-    
+    public var description: String {
+      return "HTTPServer @ 0x" + String(unsafeBitCast(self, to: UInt.self), radix: 16)
+    }
+
     struct SocketDataReader {
       private let tcpSocket: TCPSocket
       private var buffer = Data()
@@ -248,7 +296,7 @@ extension HTTP {
       mutating func readBytes(count: Int) throws -> Data {
         while buffer.count < count {
           guard let data = try tcpSocket.readData() else { break }
-          
+
           buffer.append(data)
         }
         guard buffer.count >= count else { throw InternalServerError.requestTooShort }
@@ -271,9 +319,13 @@ extension HTTP {
     func request() throws -> Request {
       var reader = SocketDataReader(socket: tcpSocket)
       let headerData = try reader.readBlockSeparated(by: Headers.CRLF2.data(using: .ascii)!)
-      guard let headerString = String(bytes: headerData, encoding: .ascii) else { throw InternalServerError.requestTooShort }
+      guard let headerString = String(bytes: headerData, encoding: .ascii) else {
+        throw InternalServerError.requestTooShort
+      }
       var request = try Request(header: headerString)
-      if let contentLength = request.getHeader(for: "Content-Length"), let length = Int(contentLength), length > 0 {
+      if let contentLength = request.getHeader(for: "Content-Length"),
+        let length = Int(contentLength), length > 0
+      {
         let messageData = try reader.readBytes(count: length)
         request.messageData = messageData
         request.messageBody = String(bytes: messageData, encoding: .utf8)
@@ -289,16 +341,18 @@ extension HTTP {
         // CRLF
         // [ message-body ]
         // We receives '{numofbytes}\r\n{data}\r\n'
-        
+
         // There maybe some part of the body in the initial data
-        
+
         let bodySeparator = Headers.CRLF.data(using: .ascii)!
         var messageData = Data()
         var finished = false
         while !finished {
           let chunkSizeData = try reader.readBlockSeparated(by: bodySeparator)
           // Should now have <num bytes>\r\n
-          guard let number = String(bytes: chunkSizeData, encoding: .ascii), let chunkSize = Int(number, radix: 16) else { throw InternalServerError.requestTooShort }
+          guard let number = String(bytes: chunkSizeData, encoding: .ascii),
+            let chunkSize = Int(number, radix: 16)
+          else { throw InternalServerError.requestTooShort }
           if chunkSize == 0 {
             finished = true
             break
@@ -314,9 +368,11 @@ extension HTTP {
       }
       return request
     }
-    func respond(with response: Response) throws { try tcpSocket.writeData(header: response.header, bodyData: response.bodyData) }
+    func respond(with response: Response) throws {
+      try tcpSocket.writeData(header: response.header, bodyData: response.bodyData)
+    }
   }
-  
+
   public struct Request: CustomStringConvertible {
     enum Method: String {
       case HEAD
@@ -341,7 +397,9 @@ extension HTTP {
       self.headers = header.components(separatedBy: Headers.CRLF)
       guard headers.count > 0 else { throw Error.invalidURI }
       let uriParts = headers[0].components(separatedBy: " ")
-      guard uriParts.count > 2, let methodName = Method(rawValue: uriParts[0]) else { throw Error.invalidMethod }
+      guard uriParts.count > 2, let methodName = Method(rawValue: uriParts[0]) else {
+        throw Error.invalidMethod
+      }
       method = methodName
       let params = uriParts[1].split(separator: "?", maxSplits: 1, omittingEmptySubsequences: true)
       if params.count > 1 {
@@ -349,7 +407,9 @@ extension HTTP {
           let keyValue = arg.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
           guard !keyValue.isEmpty else { continue }
           guard let key = keyValue[0].removingPercentEncoding else { throw Error.invalidURI }
-          guard let value = (keyValue.count > 1) ? keyValue[1].removingPercentEncoding : "" else { throw Error.invalidURI }
+          guard let value = (keyValue.count > 1) ? keyValue[1].removingPercentEncoding : "" else {
+            throw Error.invalidURI
+          }
           self.parameters[key] = value
         }
       }
@@ -364,7 +424,9 @@ extension HTTP {
       let lookup = key.lowercased()
       for header in headers {
         let parts = header.components(separatedBy: ":")
-        if parts[0].lowercased() == lookup { return parts[1].trimmingCharacters(in: CharacterSet(charactersIn: " ")) }
+        if parts[0].lowercased() == lookup {
+          return parts[1].trimmingCharacters(in: CharacterSet(charactersIn: " "))
+        }
       }
       return nil
     }
@@ -376,14 +438,22 @@ extension HTTP {
           continue
         }
         let parts = header.components(separatedBy: ":")
-        if parts.count > 1 { headerDict[parts[0]] = parts[1].trimmingCharacters(in: CharacterSet(charactersIn: " ")) }
+        if parts.count > 1 {
+          headerDict[parts[0]] = parts[1].trimmingCharacters(in: CharacterSet(charactersIn: " "))
+        }
       }
       // Include the body as a Base64 Encoded entry
-      if let bodyData = messageData ?? messageBody?.data(using: .utf8) { headerDict["x-base64-body"] = bodyData.base64EncodedString() }
-      if #available(macOS 10.13, *) { return try JSONSerialization.data(withJSONObject: headerDict, options: .sortedKeys) } else { return try JSONSerialization.data(withJSONObject: headerDict) }
+      if let bodyData = messageData ?? messageBody?.data(using: .utf8) {
+        headerDict["x-base64-body"] = bodyData.base64EncodedString()
+      }
+      if #available(macOS 10.13, *) {
+        return try JSONSerialization.data(withJSONObject: headerDict, options: .sortedKeys)
+      } else {
+        return try JSONSerialization.data(withJSONObject: headerDict)
+      }
     }
   }
-  
+
   public struct Response {
     public enum ResponseCode: Int {
       case OK = 200
@@ -393,7 +463,7 @@ extension HTTP {
       case METHOD_NOT_ALLOWED = 405
       case SERVER_ERROR = 500
     }
-    
+
     private let responseCode: Int
     private var headers: [String]
     public let bodyData: Data
@@ -406,16 +476,16 @@ extension HTTP {
     }
     public init(html: HTML) {
       #if os(Linux)
-      let headers = ["Content-Type: text/html; charset=utf-8", "Content-Encoding: gzip"]
-      let bodyData = html.data.gzipped()
-      #else 
-      let headers = ["Content-Type: text/html; charset=utf-8"]
-      let bodyData = html.data
+        let headers = ["Content-Type: text/html; charset=utf-8", "Content-Encoding: gzip"]
+        let bodyData = html.data.gzipped()
+      #else
+        let headers = ["Content-Type: text/html; charset=utf-8"]
+        let bodyData = html.data
       #endif
       self.init(responseCode: 200, headers: headers, bodyData: bodyData)
     }
-    public init(response: ResponseCode, headers: [String] = [], bodyData: Data = Data()) { 
-      self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData) 
+    public init(response: ResponseCode, headers: [String] = [], bodyData: Data = Data()) {
+      self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData)
     }
     public init(response: ResponseCode, headers: String = Headers.EMPTY, bodyData: Data) {
       let headers = headers.split(separator: "\r\n").map { String($0) }
@@ -431,13 +501,15 @@ extension HTTP {
     }
     public var header: String {
       let responseCodeName = ""
-      let statusLine = Headers.VERSION + Headers.SPACE + "\(responseCode)" + Headers.SPACE + "\(responseCodeName)"
+      let statusLine =
+        Headers.VERSION + Headers.SPACE + "\(responseCode)" + Headers.SPACE + "\(responseCodeName)"
       let header = headers.joined(separator: "\r\n")
-      return statusLine + (header != Headers.EMPTY ? Headers.CRLF + header : Headers.EMPTY) + Headers.CRLF2
+      return statusLine + (header != Headers.EMPTY ? Headers.CRLF + header : Headers.EMPTY)
+        + Headers.CRLF2
     }
     mutating func addHeader(_ header: String) { headers.append(header) }
   }
-  
+
   public struct ServerError: Error {
     let operation: String
     let errno: CInt

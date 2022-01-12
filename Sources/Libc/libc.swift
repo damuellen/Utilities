@@ -1,7 +1,7 @@
 #if canImport(Glibc)
-@_exported import Glibc
+  @_exported import Glibc
 #elseif os(Windows)
-@_exported import CRT
+  @_exported import CRT
 #else
-@_exported import Darwin.C
+  @_exported import Darwin.C
 #endif

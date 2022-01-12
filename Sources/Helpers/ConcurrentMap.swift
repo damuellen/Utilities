@@ -15,7 +15,7 @@ extension RandomAccessCollection {
   /// Returns `self.map(transform)`, computed in parallel.
   @inlinable
   public func concurrentMap<E>(_ transform: (Element) -> E)
-  -> [E]
+    -> [E]
   {
     let n = self.count
     let batchCount = ProcessInfo.processInfo.activeProcessorCount * 4
@@ -27,7 +27,7 @@ extension RandomAccessCollection {
         let startOffset = b * n / batchCount
         let endOffset = (b + 1) * n / batchCount
         var sourceIndex = index(self.startIndex, offsetBy: startOffset)
-        for p in baseAddress + startOffset ..< baseAddress + endOffset {
+        for p in baseAddress + startOffset..<baseAddress + endOffset {
           p.initialize(to: transform(self[sourceIndex]))
           formIndex(after: &sourceIndex)
         }

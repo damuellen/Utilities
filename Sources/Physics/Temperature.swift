@@ -59,7 +59,7 @@ public struct Temperature: CustomStringConvertible, Equatable {
   /// Abbreviation for temperature
   public typealias T = Temperature
 
-  public static func average(_ t1: T,_ t2: T) -> T {
+  public static func average(_ t1: T, _ t2: T) -> T {
     T((t1.kelvin + t2.kelvin) / 2)
   }
 

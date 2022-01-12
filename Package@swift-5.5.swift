@@ -6,11 +6,13 @@ let package = Package(
   products: [.library(name: "Utilities", targets: ["Utilities"])],
   dependencies: [.package(url: "https://github.com/apple/swift-numerics.git", from: "1.0.0")],
   targets: [
-    .target(name: "Libc"), 
-    .target(name: "CZLib"), 
+    .target(name: "Libc"),
+    .target(name: "CZLib"),
     .target(name: "CIAPWSIF97"),
     .target(name: "Physics", dependencies: ["Helpers", "CIAPWSIF97"]),
     .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
-    .target(name: "Helpers", dependencies: ["Libc", "CZLib", .product(name: "Numerics", package: "swift-numerics")]),
+    .target(
+      name: "Helpers",
+      dependencies: ["Libc", "CZLib", .product(name: "Numerics", package: "swift-numerics")]),
   ]
 )
