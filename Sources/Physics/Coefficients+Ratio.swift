@@ -49,6 +49,10 @@ public struct Polynomial: Codable, Equatable {
     evaluated(ratio.quotient)
   }
 
+  public func callAsFunction(_ values: [Double]) -> [Double] {
+    values.map(evaluated(_:))
+  }
+  
   public subscript(index: Int) -> Double {
     coefficients[index]
   }
