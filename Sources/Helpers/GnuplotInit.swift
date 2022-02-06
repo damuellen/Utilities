@@ -23,7 +23,7 @@ extension Gnuplot {
     let xys = xs.indices.map { index -> [F] in [xs[index]] + ys.map { $0[index] } }
     self.init(xys: [xys], xylabels: labels, titles: titles, style: style)
   }
-  public convenience init<S: Sequence, F: FloatingPoint>(xs: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
+  public convenience init<S: Sequence, F: FloatingPoint>(ys: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
     self.init(xys: xs.map { $0.map { [$0] } }, xylabels: labels, titles: titles, style: style)
   }
   public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
