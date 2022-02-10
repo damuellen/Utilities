@@ -24,7 +24,7 @@ extension Gnuplot {
     self.init(xys: [xys], xylabels: labels, titles: titles, style: style)
   }
   public convenience init<S: Sequence, F: FloatingPoint>(ys: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
-    self.init(xys: xs.map { $0.map { [$0] } }, xylabels: labels, titles: titles, style: style)
+    self.init(xys: ys.map { $0.map { [$0] } }, xylabels: labels, titles: titles, style: style)
   }
   public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
     self.init(xy1s: xy1s, xy2s: xy2s, titles: titles, style: style)
