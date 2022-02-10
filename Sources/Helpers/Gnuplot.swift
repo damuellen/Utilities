@@ -361,8 +361,8 @@ public final class Gnuplot: CustomStringConvertible {
     let xys = xs.indices.map { index in [xs[index]] + ys.map { $0[index] } }
     self.init(xys: xys, titles: titles, style: style)
   }
-  public convenience init<S: Collection, F: FloatingPoint>(xs: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
-    self.init(xys: xs.map { $0.map { [$0] } }, titles: titles, style: style)
+  public convenience init<S: Collection, F: FloatingPoint>(ys: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
+    self.init(xys: ys.map { $0.map { [$0] } }, titles: titles, style: style)
   }
   public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
     self.init(xy1s: xy1s, xy2s: xy2s, titles: titles, style: style)
