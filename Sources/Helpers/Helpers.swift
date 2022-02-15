@@ -74,6 +74,28 @@ public func start(_ command: String) {
   }
 #endif
 
+extension Date: ExpressibleByStringLiteral {
+    public init(stringLiteral: String) {
+        self.init(stringLiteral)
+    }
+    public init(_ dateString: String) {
+    let values = dateString.split(whereSeparator: {!$0.isWholeNumber}).compactMap{Int32($0)}
+    var t = time_t()
+    time(&t)
+    var info = localtime(&t)!.pointee
+    info.tm_year = values[0] - 1900
+    info.tm_mon = values[1] - 1
+    info.tm_mday = values[2]
+    if values.count > 3 {
+        info.tm_hour = values[3]
+        info.tm_min = values[4]
+        info.tm_sec = values[5]
+    }
+    let time = mktime(&info)
+    self.init(timeIntervalSince1970: TimeInterval(time))
+    }
+}
+
 extension URL: ExpressibleByStringLiteral {
   public init(stringLiteral value: String) { self.init(fileURLWithPath: value) }
 }
