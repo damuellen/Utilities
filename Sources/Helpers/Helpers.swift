@@ -84,9 +84,11 @@ extension Date: ExpressibleByStringLiteral {
     info.tm_year = values[0] - 1900
     info.tm_mon = values[1] - 1
     info.tm_mday = values[2]
-    if values.count > 3 {
+    if values.count > 4 {
       info.tm_hour = values[3]
       info.tm_min = values[4]
+    }
+    if values.count > 5 {
       info.tm_sec = values[5]
     }
     let time = mktime(&info)
