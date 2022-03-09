@@ -89,11 +89,6 @@ extension Polynomial {
     let countOfElements = dependentValues.count
     guard countOfElements > order else { return nil }
 
-    // This method has imposed an arbitrary bound of
-    // order <= maxOrder.  Increase maxOrder if necessary.
-    let maxOrder = 6
-    guard order <= maxOrder else { return nil }
-
     // Identify the column vector
     for ii in 0..<countOfElements {
       let x = dependentValues[ii]
