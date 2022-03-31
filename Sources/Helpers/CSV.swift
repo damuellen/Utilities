@@ -13,7 +13,7 @@ import Foundation
 /// Read files only containing floating-point numbers.
 /// - Note: Auto-detect of optional String headers.
 /// - Important: Scientific notation is not supported.
-public struct CSV {
+public struct CSVReader {
   public let headerRow: [String]?
   public let dataRows: [[Double]]
 
