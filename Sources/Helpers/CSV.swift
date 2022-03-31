@@ -153,7 +153,7 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
 
 #if canImport(PythonKit)
 import PythonKit
-extension CSV {
+extension CSVReader {
   public func display(_ range: Array<Any>.Indices? = nil) {
     let html = """
     <html>
