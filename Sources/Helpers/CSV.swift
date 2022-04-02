@@ -63,14 +63,31 @@ public struct CSVReader {
     }
   }
 
-  public init?(atPath: String, separator: Unicode.Scalar = ",") {
+  
+
+  public subscript(column: String) -> [Double] {
+    let c = headerRow?.firstIndex(of: column) ?? dataRows[0].startIndex
+    return self[column: c]
+  }
+
+  public subscript(column c: Int) -> [Double] {
+    return [Double](unsafeUninitializedCapacity: dataRows.count) {
+      uninitializedMemory, resultCount in
+      resultCount = dataRows.count
+      for i in dataRows.indices {
+        uninitializedMemory[i] = dataRows[i][c]
+      }
+    }
+  }
+
+  public init?(atPath: String, separator: Unicode.Scalar = ",", skip: String...) {
     let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
-    self.init(data: data, separator: separator)
+    self.init(data: data, separator: separator, skip: skip)
   }
 
-  public init?(data: Data, separator: Unicode.Scalar = ",") {
+  public init?(data: Data, separator: Unicode.Scalar = ",", skip: [String] = []) {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
@@ -83,32 +100,26 @@ public struct CSVReader {
     let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
     let hasHeader = data[..<end].contains(where: isLetter)
     let start = hasHeader ? data.index(after: firstNewLine) : data.startIndex
-    self.headerRow =
-      !hasHeader
+    var headers = !hasHeader
       ? nil
       : data[..<end].split(separator: separator).map { slice in
         String(decoding: slice.filter(isSpace), as: UTF8.self)
       }
-    #if DEBUG
-      if let headerRow = headerRow {
-        print("Header row detected.", headerRow)
-      } else {
-        print("No header.")
-      }
-    #endif
+    let excluded: [Int]
+    if headers != nil {
+      excluded = skip.compactMap { headers!.firstIndex(of: $0) }
+      excluded.reversed().forEach { headers!.remove(at: $0) }
+    } else {
+      excluded = skip.compactMap { Int($0) }
+    }
+    self.headerRow = headers
     self.dataRows = data[start...].withUnsafeBytes { content in
-      content.split(separator: newLine).concurrentMap { line in
+      content.split(separator: newLine).map { line in
         let line = hasCR ? line.dropLast() : line
         let buffer = UnsafeRawBufferPointer(rebasing: line)
-        return parse(buffer, separator: separator)
+        return parse(buffer, separator: separator, exclude: excluded)
       }
     }
-    #if DEBUG
-      if let headerRow = headerRow, dataRows[0].count != headerRow.count {
-        print("Header missing !")
-        print(dataRows[0])
-      }
-    #endif
   }
 }
 
@@ -137,11 +148,18 @@ extension Array where Element == Double {
   var largest: Double { self.map { $0.magnitude }.max() ?? 0 }
 }
 
-private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
+private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: [Int]) -> [Double] {
   let power = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17]
-  var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
+  let base = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
-  while true {
+  var p = base
+  var distances = [0]
+  for (n, p) in buffer.enumerated() { if p == separator { distances.append(n+1) } }
+  var counter = -1
+  while !distances.isEmpty {
+    counter += 1
+    p = base.advanced(by: distances.removeFirst())
+    if exclude.contains(counter) { continue }
     var r = Double.zero
     var neg = false
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
@@ -165,12 +183,6 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
       r += f / power[n]  // Here be dragons.
     }
     if neg { a.append(-r) } else { a.append(r) }
-    while p.pointee == UInt8(ascii: " ") { p = p.successor() }
-    if p.pointee == separator {
-      p = p.successor()
-    } else {
-      break
-    }
   }
   return a
 }
