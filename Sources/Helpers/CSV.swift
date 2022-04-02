@@ -12,7 +12,6 @@ import Foundation
 
 /// Read files only containing floating-point numbers.
 /// - Note: Auto-detect of optional String headers.
-/// - Important: Scientific notation is not supported.
 public struct CSVReader {
   public let headerRow: [String]?
   public let dataRows: [[Double]]
@@ -63,14 +62,14 @@ public struct CSVReader {
     }
   }
 
-  public init?(atPath: String, separator: Unicode.Scalar = ",", skip: String...) {
+  public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String...) {
     let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
-    self.init(data: data, separator: separator, skip: skip)
+    self.init(data: data, separator: separator, filter: filter, skip: skip)
   }
 
-  public init?(data: Data, separator: Unicode.Scalar = ",", skip: [String] = []) {
+  public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = []) {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
@@ -83,19 +82,29 @@ public struct CSVReader {
     let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
     let hasHeader = data[..<end].contains(where: isLetter)
     let start = hasHeader ? data.index(after: firstNewLine) : data.startIndex
-    var headers = !hasHeader
-      ? nil
-      : data[..<end].split(separator: separator).map { slice in
+    let excluded: [Int]
+    if hasHeader {
+      let headers = data[..<end].split(separator: separator).map { slice in
         String(decoding: slice.filter(isSpace), as: UTF8.self)
       }
-    let excluded: [Int]
-    if headers != nil {
-      excluded = skip.compactMap { headers!.firstIndex(of: $0) }
-      excluded.reversed().forEach { headers!.remove(at: $0) }
+      var unique = [String]()
+      for (n, header) in headers.enumerated() {
+        if unique.contains(header) {
+          unique.append(header + String(n))
+        } else {
+          unique.append(header)
+        }
+      }
+      excluded = headers.indices.filter { i in
+        skip.reduce(false) { headers[i].elementsEqual($1) } ||
+        filter.reduce(false) { !headers[i].contains($1) }
+      }
+      excluded.reversed().forEach { unique.remove(at: $0) }
+      self.headerRow = unique
     } else {
       excluded = skip.compactMap { Int($0) }
+      self.headerRow = nil
     }
-    self.headerRow = headers
     self.dataRows = data[start...].withUnsafeBytes { content in
       content.split(separator: newLine).map { line in
         let line = hasCR ? line.dropLast() : line
@@ -136,13 +145,11 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
   let base = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
   var p = base
-  var distances = [0]
-  for (n, p) in buffer.enumerated() { if p == separator { distances.append(n+1) } }
-  var counter = -1
-  while !distances.isEmpty {
-    counter += 1
-    p = base.advanced(by: distances.removeFirst())
-    if exclude.contains(counter) { continue }
+  var distance = [0]
+  for (n, p) in buffer.enumerated() { if p == separator { distance.append(n+1) } }
+  for (n, d) in distance.enumerated() {
+    if exclude.contains(n) { continue }
+    p = base.advanced(by: d)
     var r = Double.zero
     var neg = false
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
@@ -164,6 +171,21 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
         n += 1
       }
       r += f / power[n]  // Here be dragons.
+    }
+    if p.pointee == UInt8(ascii: "E") || p.pointee == UInt8(ascii: "e") {
+      var e = Int.zero
+      var neg = false
+      p = p.successor()
+      if p.pointee == UInt8(ascii: "-") {
+        neg = true
+        p = p.successor()
+      }
+      while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
+        e = Int(p.pointee - UInt8(ascii: "0")) + e * 10
+        p = p.successor()
+      }
+      e = min(e, 16)
+      if neg { r = r / power[e] } else { r = r * power[e] }
     }
     if neg { a.append(-r) } else { a.append(r) }
   }
