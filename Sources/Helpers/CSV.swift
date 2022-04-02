@@ -62,14 +62,14 @@ public struct CSVReader {
     }
   }
 
-  public init?(atPath: String, separator: Unicode.Scalar = ",", skip: String...) {
+  public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String...) {
     let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
-    self.init(data: data, separator: separator, skip: skip)
+    self.init(data: data, separator: separator, filter: filter, skip: skip)
   }
 
-  public init?(data: Data, separator: Unicode.Scalar = ",", skip: [String] = []) {
+  public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = []) {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
@@ -96,7 +96,8 @@ public struct CSVReader {
         }
       }
       excluded = headers.indices.filter { i in
-        skip.reduce(false) { headers[i].elementsEqual($1) }
+        skip.reduce(false) { headers[i].elementsEqual($1) } ||
+        filter.reduce(false) { !headers[i].contains($1) }
       }
       excluded.reversed().forEach { unique.remove(at: $0) }
       self.headerRow = unique
