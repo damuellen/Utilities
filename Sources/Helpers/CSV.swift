@@ -21,20 +21,21 @@ public struct CSVReader {
 
   public var head: String { peek(0..<min(30, dataRows.endIndex)) }
 
-  public var tail: String { 
+  public var tail: String {
     if dataRows.count > 30 {
-      return peek(dataRows.endIndex-30..<dataRows.endIndex) 
+      return peek(dataRows.endIndex - 30..<dataRows.endIndex)
     }
-    return peek(0..<dataRows.endIndex) 
+    return peek(0..<dataRows.endIndex)
   }
 
   public func peek(_ range: Array<Any>.Indices) -> String {
     if let headerRow = headerRow {
-      let minWidth = headerRow.map{$0.count}.max() ?? 1
+      let minWidth = headerRow.map { $0.count }.max() ?? 1
       let formatted = Array.justified(dataRows[range], minWidth: minWidth)
-      let width = (terminalWidth() / formatted.1+1) * formatted.1+1
-      return String(headerRow.map { $0.leftpad(length: formatted.1) }
-        .joined(separator: " ").prefix(width)) + "\n" + formatted.0
+      let width = (terminalWidth() / formatted.1 + 1) * formatted.1 + 1
+      return String(
+        headerRow.map { $0.leftpad(length: formatted.1) }
+          .joined(separator: " ").prefix(width)) + "\n" + formatted.0
     }
     return Array.justified(dataRows[range]).0
   }
@@ -53,7 +54,7 @@ public struct CSVReader {
   }
 
   public subscript(column c: Int) -> [Double] {
-    return Array<Double>(unsafeUninitializedCapacity: dataRows.count) {
+    return [Double](unsafeUninitializedCapacity: dataRows.count) {
       uninitializedMemory, resultCount in
       resultCount = dataRows.count
       for i in dataRows.indices {
@@ -62,14 +63,14 @@ public struct CSVReader {
     }
   }
 
-  public init?(atPath: String, separator: Unicode.Scalar = ",") {
+  public init?(atPath: String, separator: Unicode.Scalar = ",", skip: String...) {
     let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
-    self.init(data: data, separator: separator)
+    self.init(data: data, separator: separator, skip: skip)
   }
 
-  public init?(data: Data, separator: Unicode.Scalar = ",") {
+  public init?(data: Data, separator: Unicode.Scalar = ",", skip: [String] = []) {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
@@ -82,44 +83,66 @@ public struct CSVReader {
     let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
     let hasHeader = data[..<end].contains(where: isLetter)
     let start = hasHeader ? data.index(after: firstNewLine) : data.startIndex
-    self.headerRow = !hasHeader ? nil : data[..<end].split(separator: separator).map { slice in
-      String(decoding: slice.filter(isSpace), as: UTF8.self)
+    var headers = !hasHeader
+      ? nil
+      : data[..<end].split(separator: separator).map { slice in
+        String(decoding: slice.filter(isSpace), as: UTF8.self)
+      }
+    let excluded: [Int]
+    if headers != nil {
+      excluded = skip.compactMap { headers!.firstIndex(of: $0) }
+      excluded.reversed().forEach { headers!.remove(at: $0) }
+    } else {
+      excluded = skip.compactMap { Int($0) }
     }
+    self.headerRow = headers
     self.dataRows = data[start...].withUnsafeBytes { content in
-      content.split(separator: newLine).concurrentMap { line in
+      content.split(separator: newLine).map { line in
         let line = hasCR ? line.dropLast() : line
         let buffer = UnsafeRawBufferPointer(rebasing: line)
-        return parse(buffer, separator: separator)
+        return parse(buffer, separator: separator, exclude: excluded)
       }
     }
   }
 }
 
-public extension Array where Element == Double {
-  var formatted: String {
-    self.map{$0.description}.joined(separator: ", ")
-  }
-}
-
-public extension Array where Element == Double {
-  static func justified(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
-    let m = Int(array.map{$0.largest}.reduce(Double(minWidth), { Swift.max($0, $1) })).description.count
-    let width = (terminalWidth() / minWidth+1) * minWidth+1
-    return (array.map { row in
-      String(row.map { String(format: "%.1f", $0).leftpad(length: m+2) }.joined(separator: " ").prefix(width))
-    }.joined(separator: "\n"), m+2)
+extension Array where Element == Double {
+  public var formatted: String {
+    self.map { $0.description }.joined(separator: ", ")
   }
 }
 
 extension Array where Element == Double {
-  var largest: Double { self.map{$0.magnitude}.max() ?? 0 }
+  public static func justified(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
+    let m = Int(array.map { $0.largest }.reduce(Double(minWidth), { Swift.max($0, $1) }))
+      .description.count
+    let width = (terminalWidth() / minWidth + 1) * minWidth + 1
+    return (
+      array.map { row in
+        String(
+          row.map { String(format: "%.1f", $0).leftpad(length: m + 2) }.joined(separator: " ")
+            .prefix(width))
+      }.joined(separator: "\n"), m + 2
+    )
+  }
 }
 
-private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
+extension Array where Element == Double {
+  var largest: Double { self.map { $0.magnitude }.max() ?? 0 }
+}
+
+private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: [Int]) -> [Double] {
   let power = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17]
-  var p = p.baseAddress!.assumingMemoryBound(to: UInt8.self)
+  let base = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
-  while true {
+  var p = base
+  var distances = [0]
+  for (n, p) in buffer.enumerated() { if p == separator { distances.append(n+1) } }
+  var counter = -1
+  while !distances.isEmpty {
+    counter += 1
+    p = base.advanced(by: distances.removeFirst())
+    if exclude.contains(counter) { continue }
     var r = Double.zero
     var neg = false
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
@@ -140,73 +163,9 @@ private func parse(_ p: UnsafeRawBufferPointer, separator: UInt8) -> [Double] {
         p = p.successor()
         n += 1
       }
-      r += f / power[n] // Here be dragons.
+      r += f / power[n]  // Here be dragons.
     }
     if neg { a.append(-r) } else { a.append(r) }
-    while p.pointee == UInt8(ascii: " ") { p = p.successor() }
-    if p.pointee == separator {
-      p = p.successor()
-    } else { break }
   }
   return a
 }
-
-#if canImport(PythonKit)
-import PythonKit
-extension CSVReader {
-  public func display(_ range: Array<Any>.Indices? = nil) {
-    let html = """
-    <html>
-    <head>
-    <style>
-    table {
-      font-family: sans-serif;
-      font-size: small;
-      border-collapse: collapse;
-      table-layout: auto;
-    }
-    td, th {
-      border: 1px solid #ddd;
-      padding: 4px;
-      text-align: right;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 10%;
-    }
-    tr:nth-child(even) { background-color: #f2f2f2; }
-    tr:hover { background-color: #ddd; }
-    th {
-      padding-top: 6px;
-      padding-bottom: 6px;
-      text-align: center;
-      background-color: Teal;
-      color: white;
-    }
-    </style>
-    </head>
-    <body>
-    """
-    var table = "\n<table>\n"
-    if let headerRow = headerRow {
-      table += headerRow.isEmpty ? "" : "\t<tr>\n" + headerRow.map {
-          "\t\t<th>" + $0.description + "</th>\n"
-        }.joined() + "\t</tr>\n"
-    }
-    let rows: ArraySlice<[Double]>
-    if let range = range {
-      rows = dataRows[range]
-    } else {
-      rows = dataRows[...]
-    }
-    table += rows.map { row in
-      "\t<tr>\n" + row.map {
-        "\t\t<td>" + String(format: "%.2f", $0) + "</td>\n"
-      }.joined() + "\t</tr>\n"
-    }.joined()
-    table += "</table>\n"
-
-    let display = Python.import("IPython.display")
-    display.display(display.HTML(data: html + table + "</body>\n</html>\n"))
-  }
-}
-#endif
