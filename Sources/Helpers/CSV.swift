@@ -138,6 +138,7 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
   var distance = [0]
   for (n, p) in buffer.enumerated() { if p == separator { distance.append(n+1) } }
   for (n, d) in distance.enumerated() {
+    if exclude.contains(n) { continue }
     p = base.advanced(by: d)
     var r = Double.zero
     var neg = false
