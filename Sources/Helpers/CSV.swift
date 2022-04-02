@@ -135,13 +135,10 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
   let base = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
   var p = base
-  var distances = [0]
-  for (n, p) in buffer.enumerated() { if p == separator { distances.append(n+1) } }
-  var counter = -1
-  while !distances.isEmpty {
-    counter += 1
-    p = base.advanced(by: distances.removeFirst())
-    if exclude.contains(counter) { continue }
+  var distance = [0]
+  for (n, p) in buffer.enumerated() { if p == separator { distance.append(n+1) } }
+  for (n, d) in distance.enumerated() {
+    p = base.advanced(by: d)
     var r = Double.zero
     var neg = false
     while p.pointee == UInt8(ascii: " ") { p = p.successor() }
