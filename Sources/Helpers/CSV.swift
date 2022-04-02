@@ -102,6 +102,7 @@ public struct CSVReader {
       excluded.reversed().forEach { unique.remove(at: $0) }
       self.headerRow = unique
     } else {
+      if !filter.isEmpty { print("Missing column names.") }
       excluded = skip.compactMap { Int($0) }
       self.headerRow = nil
     }
