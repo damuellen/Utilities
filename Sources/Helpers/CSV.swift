@@ -82,19 +82,26 @@ public struct CSVReader {
     let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
     let hasHeader = data[..<end].contains(where: isLetter)
     let start = hasHeader ? data.index(after: firstNewLine) : data.startIndex
-    var headers = !hasHeader
-      ? nil
-      : data[..<end].split(separator: separator).map { slice in
+    let excluded: [Int]
+    if hasHeader {
+      let headers = data[..<end].split(separator: separator).map { slice in
         String(decoding: slice.filter(isSpace), as: UTF8.self)
       }
-    let excluded: [Int]
-    if headers != nil {
-      excluded = skip.compactMap { headers!.firstIndex(of: $0) }
-      excluded.reversed().forEach { headers!.remove(at: $0) }
+      var unique = [String]()
+      for (n, header) in headers.enumerated() {
+        if unique.contains(header) {
+          unique.append(header + String(n))
+        } else {
+          unique.append(header)
+        }
+      }
+      excluded = skip.compactMap { headers.firstIndex(of: $0) }
+      excluded.reversed().forEach { unique.remove(at: $0) }
+      self.headerRow = unique
     } else {
       excluded = skip.compactMap { Int($0) }
+      self.headerRow = nil
     }
-    self.headerRow = headers
     self.dataRows = data[start...].withUnsafeBytes { content in
       content.split(separator: newLine).map { line in
         let line = hasCR ? line.dropLast() : line
