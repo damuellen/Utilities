@@ -179,6 +179,8 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
       if p.pointee == UInt8(ascii: "-") {
         neg = true
         p = p.successor()
+      } else if p.pointee == UInt8(ascii: "+") {
+        p = p.successor()
       }
       while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
         e = Int(p.pointee - UInt8(ascii: "0")) + e * 10
@@ -187,7 +189,8 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
       e = min(e, 16)
       if neg { r = r / power[e] } else { r = r * power[e] }
     }
-    if neg { a.append(-r) } else { a.append(r) }
+    if p == base.advanced(by: d) { a.append(.nan) }
+    else { if neg { a.append(-r) } else { a.append(r) } }
   }
   return a
 }
