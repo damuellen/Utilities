@@ -176,6 +176,7 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
         e = Int(p.pointee - UInt8(ascii: "0")) + e * 10
         p = p.successor()
       }
+      e = min(e, 16)
       if neg { r = r / power[e] } else { r = r * power[e] }
     }
     if neg { a.append(-r) } else { a.append(r) }
