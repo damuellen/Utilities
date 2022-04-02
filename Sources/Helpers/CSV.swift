@@ -12,7 +12,6 @@ import Foundation
 
 /// Read files only containing floating-point numbers.
 /// - Note: Auto-detect of optional String headers.
-/// - Important: Scientific notation is not supported.
 public struct CSVReader {
   public let headerRow: [String]?
   public let dataRows: [[Double]]
@@ -164,6 +163,20 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
         n += 1
       }
       r += f / power[n]  // Here be dragons.
+    }
+    if p.pointee == UInt8(ascii: "E") || p.pointee == UInt8(ascii: "e") {
+      var e = Int.zero
+      var neg = false
+      p = p.successor()
+      if p.pointee == UInt8(ascii: "-") {
+        neg = true
+        p = p.successor()
+      }
+      while p.pointee >= UInt8(ascii: "0") && p.pointee <= UInt8(ascii: "9") {
+        e = Int(p.pointee - UInt8(ascii: "0")) + e * 10
+        p = p.successor()
+      }
+      if neg { r = r / power[e] } else { r = r * power[e] }
     }
     if neg { a.append(-r) } else { a.append(r) }
   }
