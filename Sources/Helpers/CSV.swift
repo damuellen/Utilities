@@ -63,23 +63,6 @@ public struct CSVReader {
     }
   }
 
-  
-
-  public subscript(column: String) -> [Double] {
-    let c = headerRow?.firstIndex(of: column) ?? dataRows[0].startIndex
-    return self[column: c]
-  }
-
-  public subscript(column c: Int) -> [Double] {
-    return [Double](unsafeUninitializedCapacity: dataRows.count) {
-      uninitializedMemory, resultCount in
-      resultCount = dataRows.count
-      for i in dataRows.indices {
-        uninitializedMemory[i] = dataRows[i][c]
-      }
-    }
-  }
-
   public init?(atPath: String, separator: Unicode.Scalar = ",", skip: String...) {
     let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
