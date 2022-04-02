@@ -151,7 +151,7 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
       r = Double(p.pointee - UInt8(ascii: "0")).addingProduct(r, 10)
       p = p.successor()
     }
-    if p.pointee == UInt8(ascii: ".") {
+    if p.pointee == UInt8(ascii: ".") || p.pointee == UInt8(ascii: ",") {
       var f = Double.zero
       var n = 0
       p = p.successor()
