@@ -95,7 +95,9 @@ public struct CSVReader {
           unique.append(header)
         }
       }
-      excluded = skip.compactMap { headers.firstIndex(of: $0) }
+      excluded = headers.indices.filter { i in
+        skip.reduce(false) { headers[i].contains($1) }
+      }
       excluded.reversed().forEach { unique.remove(at: $0) }
       self.headerRow = unique
     } else {
