@@ -43,9 +43,7 @@ public final class Gnuplot: CustomStringConvertible {
   public var svg: String? {
     do { 
       guard let data = try callAsFunction(.svg(path: "")) else { return nil }
-      let svg = data.dropFirst(270)
-      return #"<svg width="\#(width+25)" height="\#(height)" viewBox="0 0 \#(width+25) \#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
-      + String(decoding: svg, as: Unicode.UTF8.self)
+      return String(decoding: data, as: Unicode.UTF8.self)
     } catch { 
       print(error)
       return nil 
@@ -62,14 +60,8 @@ public final class Gnuplot: CustomStringConvertible {
     self.settings = Gnuplot.settings(style)
   }
   #if os(Linux)
-  deinit {
-    if let process = Gnuplot.running, process.isRunning {
-      let stdin = process.standardInput as! Pipe
-      stdin.fileHandleForWriting.write("\nexit\n".data(using: .utf8)!)
-      process.waitUntilExit()
-      Gnuplot.running = nil
-    }
-  }
+    
+  
   private static var running: Process?
   #endif
   #if os(iOS)
@@ -128,16 +120,6 @@ public final class Gnuplot: CustomStringConvertible {
     stdin.fileHandleForWriting.write(commands(terminal).data(using: .utf8)!)
     let stdout = gnuplot.standardOutput as! Pipe
     #if os(Linux)
-    let endOfData: Data
-    if case .svg(let path) = terminal, path.isEmpty {
-      endOfData = "</svg>\n\n".data(using: .utf8)!
-    } else if case .pdf(let path) = terminal, path.isEmpty {
-      endOfData = Data([37,37,69,79,70,10]) // %%EOF
-    } else if case .pngSmall(let path) = terminal, path.isEmpty {
-      endOfData = Data([73,69,78,68,174,66,96,130]) // IEND
-    } else {
-      return nil
-    }
     return try stdout.fileHandleForReading.readToEnd()
     #else
     if #available(macOS 10.15.4, *) {
