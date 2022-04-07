@@ -82,7 +82,6 @@ public final class Gnuplot: CustomStringConvertible {
     if let process = Gnuplot.running { if process.isRunning { return process } }
     let gnuplot = Process()
     gnuplot.executableURL = "/usr/bin/gnuplot"
-    gnuplot.arguments = ["--persist"]
     Gnuplot.running = gnuplot
     #else
     let gnuplot = Process()
@@ -139,11 +138,7 @@ public final class Gnuplot: CustomStringConvertible {
     } else {
       return nil
     }
-    var data = Data()
-    while data.suffix(endOfData.count) != endOfData {
-      data.append(stdout.fileHandleForReading.availableData)
-    }
-    return data
+    return try stdout.fileHandleForReading.readToEnd()
     #else
     if #available(macOS 10.15.4, *) {
       try stdin.fileHandleForWriting.close()
