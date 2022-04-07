@@ -175,7 +175,7 @@ public final class Gnuplot: CustomStringConvertible {
         + "set multiplot layout \(layout.rows),\(layout.cols) rowsfirst\n"
         + plot + "\nreset session\nunset multiplot\n"
     }
-    return datablock + config + "\n" + plot + "\nreset session\n"
+    return datablock + config + "\n" + plot + "\nreset session\nexit\n"
   }
   public var description: String { commands() }
   public var settings: [String: String]
