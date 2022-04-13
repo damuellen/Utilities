@@ -80,7 +80,12 @@ extension Date: ExpressibleByStringLiteral {
     let values = dateString.split(whereSeparator: {!$0.isWholeNumber}).compactMap{Int32($0)}
     var t = time_t()
     time(&t)
+    #if os(Windows)
+    var info = tm()
+    localtime_s(&info, &t)
+    #else
     var info = localtime(&t)!.pointee
+    #endif
     info.tm_year = values[0] - 1900
     info.tm_mon = values[1] - 1
     info.tm_mday = values[2]
