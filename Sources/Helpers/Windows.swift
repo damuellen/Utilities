@@ -86,6 +86,6 @@
   }
 #else
   public func ClearScreen() {
-    print("\u{1b}[2J", terminator: "")
+    print("\u{1b}[2J", "\u{1b}[0;0H", terminator: "")
   }
 #endif
