@@ -75,4 +75,17 @@
 
     return GetOpenFileNameA(&ofn) ? String(cString: ofn.lpstrFile) : nil
   }
+
+  public func ClearScreen() {
+    let handle = GetStdHandle(STD_OUTPUT_HANDLE)
+    var info = CONSOLE_SCREEN_BUFFER_INFO()
+    GetConsoleScreenBufferInfo(handle, &info)
+    var count = DWORD()
+    FillConsoleOutputCharacterW(handle, WCHAR(32), DWORD(info.dwSize.X * info.dwSize.X), COORD(X: 0, Y: 0), &count)
+    SetConsoleCursorPosition(handle, COORD(X: 0, Y: 0))
+  }
+#else
+  public func ClearScreen() {
+    print("\u{1b}[2J", terminator: "")
+  }
 #endif
