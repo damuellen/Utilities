@@ -77,7 +77,11 @@ public func start(_ command: String) {
 extension Date: ExpressibleByStringLiteral {
   public init(stringLiteral: String) { self.init(stringLiteral) }
   public init(_ dateString: String) {
-    let values = dateString.split(whereSeparator: {!$0.isWholeNumber}).compactMap{Int32($0)}
+    let values = dateString.split(
+      maxSplits: 6, 
+      omittingEmptySubsequences: true, 
+      whereSeparator: {!$0.isWholeNumber}
+    ).compactMap { Int32($0) }
     var t = time_t()
     time(&t)
     #if os(Windows)
