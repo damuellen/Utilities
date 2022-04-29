@@ -78,6 +78,8 @@
 
   public func ClearScreen() {
     let handle = GetStdHandle(STD_OUTPUT_HANDLE)
+    var cursor = CONSOLE_CURSOR_INFO(dwSize: 1, bVisible: false)
+    SetConsoleCursorInfo(handle, &cursor)
     var info = CONSOLE_SCREEN_BUFFER_INFO()
     GetConsoleScreenBufferInfo(handle, &info)
     var count = DWORD()
