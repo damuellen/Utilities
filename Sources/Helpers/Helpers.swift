@@ -75,8 +75,8 @@ public func start(_ command: String) {
 #endif
 
 extension Date: ExpressibleByStringLiteral {
-  public init(stringLiteral: String) { self.init(stringLiteral) }
-  public init(_ dateString: String) {
+  public init(stringLiteral: String) { self.init(Substring(stringLiteral)) }
+  public init(_ dateString: Substring) {
     let values = dateString.split(
       maxSplits: 6, 
       omittingEmptySubsequences: true, 
