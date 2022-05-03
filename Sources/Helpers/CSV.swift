@@ -29,7 +29,7 @@ public struct CSVReader {
     return peek(0..<dataRows.endIndex)
   }
 
-  public var dates: [Dates] {
+  public var dates: [Date] {
     if let parseDates = parseDates {
       return dataRows.indices.map { Date(timeIntervalSince1970: dataRows[$0][parseDates]) }
     } else {
@@ -244,5 +244,5 @@ private func parseDate(_ buffer: UnsafeRawBufferPointer, separator: UInt8, at: I
   if values.count > 5 {
     info.tm_sec = values[5]
   }
-  return mktime(&info)
+  return Double(mktime(&info))
 }
