@@ -16,6 +16,8 @@ public struct CSVReader {
   public let headerRow: [String]?
   public let dataRows: [[Double]]
 
+  private let parseDates: Int?
+
   public var csv: String { peek(dataRows.indices) }
 
   public var head: String { peek(0..<min(30, dataRows.endIndex)) }
@@ -25,6 +27,14 @@ public struct CSVReader {
       return peek(dataRows.endIndex - 30..<dataRows.endIndex)
     }
     return peek(0..<dataRows.endIndex)
+  }
+
+  public var dates: [Dates] {
+    if let parseDates = parseDates {
+      return dataRows.indices.map { Date(timeIntervalSince1970: dataRows[$0][parseDates]) }
+    } else {
+      return []
+    }    
   }
 
   public func peek(_ range: Array<Any>.Indices) -> String {
@@ -62,11 +72,11 @@ public struct CSVReader {
     }
   }
 
-  public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String...) {
+  public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String..., parseDates: Int? = nil) {
     let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
-    self.init(data: data, separator: separator, filter: filter, skip: skip)
+    self.init(data: data, separator: separator, filter: filter, skip: skip, parseDates: parseDates)
   }
 
   public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = [], parseDates: Int? = nil) {
@@ -105,6 +115,7 @@ public struct CSVReader {
       excluded = skip.compactMap { Int($0) }
       self.headerRow = nil
     }
+    self.parseDates = parseDates
     if let parseDates = parseDates {
       excluded.append(parseDates)
       self.dataRows = data[start...].withUnsafeBytes { content in
@@ -117,17 +128,18 @@ public struct CSVReader {
           row.insert(date, at: min(parseDates, row.endIndex))
           return row
         }
-      }
-    }  
-    self.dataRows = data[start...].withUnsafeBytes { content in
-      let lines = content.split(separator: newLine)
-      return lines.map { line in
-        let line = hasCR ? line.dropLast() : line
-        let buffer = UnsafeRawBufferPointer(rebasing: line)
-        return parse(buffer, separator: separator, exclude: excluded)
+      }      
+    } else {
+      self.dataRows = data[start...].withUnsafeBytes { content in
+        let lines = content.split(separator: newLine)
+        return lines.map { line in
+          let line = hasCR ? line.dropLast() : line
+          let buffer = UnsafeRawBufferPointer(rebasing: line)
+          return parse(buffer, separator: separator, exclude: excluded)
+        }
       }
     }
-  }
+  }  
 }
 
 extension Array where Element == Double {
