@@ -83,7 +83,6 @@ public struct CSVReader {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
-    let isSpace = { $0 != UInt8(ascii: " ") }
     let isLetter = { $0 > UInt8(ascii: "@") }
     guard let firstNewLine = data.firstIndex(of: newLine) else { return nil }
     let firstSeparator = data.firstIndex(of: separator) ?? 0
@@ -95,7 +94,7 @@ public struct CSVReader {
     var excluded: [Int]
     if hasHeader {
       let headers = data[..<end].split(separator: separator).map { slice in
-        String(decoding: slice.filter(isSpace), as: UTF8.self)
+        String(decoding: slice, as: UTF8.self)
       }
       var unique = [String]()
       for (n, header) in headers.enumerated() {
@@ -105,12 +104,12 @@ public struct CSVReader {
           unique.append(header)
         }
       }
-      excluded = headers.indices.filter { i in
+      excluded = headers.indices.filter { i in        
         skip.reduce(false) { headers[i].elementsEqual($1) } ||
         filter.reduce(false) { !headers[i].contains($1) }
       }
-      excluded.reversed().forEach { unique.remove(at: $0) }
-      self.headerRow = unique
+      excluded.reversed().forEach({ if $0 != parseDates { unique.remove(at: $0) } })
+      self.headerRow = unique      
     } else {
       excluded = skip.compactMap { Int($0) }
       self.headerRow = nil
