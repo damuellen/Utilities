@@ -69,7 +69,7 @@ public struct CSVReader {
     self.init(data: data, separator: separator, filter: filter, skip: skip)
   }
 
-  public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = []) {
+  public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = [], parseDates: Int? = nil) {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
@@ -82,7 +82,7 @@ public struct CSVReader {
     let end = hasCR ? data.index(before: firstNewLine) : firstNewLine
     let hasHeader = data[..<end].contains(where: isLetter)
     let start = hasHeader ? data.index(after: firstNewLine) : data.startIndex
-    let excluded: [Int]
+    var excluded: [Int]
     if hasHeader {
       let headers = data[..<end].split(separator: separator).map { slice in
         String(decoding: slice.filter(isSpace), as: UTF8.self)
@@ -105,8 +105,23 @@ public struct CSVReader {
       excluded = skip.compactMap { Int($0) }
       self.headerRow = nil
     }
+    if let parseDates = parseDates {
+      excluded.append(parseDates)
+      self.dataRows = data[start...].withUnsafeBytes { content in
+        let lines = content.split(separator: newLine)
+        return lines.map { line in
+          let line = hasCR ? line.dropLast() : line
+          let buffer = UnsafeRawBufferPointer(rebasing: line)
+          let date = parseDate(buffer, separator: separator, at: parseDates)
+          var row = parse(buffer, separator: separator, exclude: excluded)
+          row.insert(date, at: min(parseDates, row.endIndex))
+          return row
+        }
+      }
+    }  
     self.dataRows = data[start...].withUnsafeBytes { content in
-      content.split(separator: newLine).map { line in
+      let lines = content.split(separator: newLine)
+      return lines.map { line in
         let line = hasCR ? line.dropLast() : line
         let buffer = UnsafeRawBufferPointer(rebasing: line)
         return parse(buffer, separator: separator, exclude: excluded)
@@ -193,4 +208,29 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
     else { if neg { a.append(-r) } else { a.append(r) } }
   }
   return a
+}
+
+private func parseDate(_ buffer: UnsafeRawBufferPointer, separator: UInt8, at: Int) -> Double {
+  let dateString = buffer.split(separator: separator, maxSplits: at + 1, omittingEmptySubsequences: false)[at]
+  let date = dateString.split(maxSplits: 6, omittingEmptySubsequences: false, whereSeparator: { $0 < UInt8(ascii: "0") && $0 > UInt8(ascii: "9")})
+  let values = date.prefix(6).map { $0.map { Int32($0) }.reduce(into: 0, { $0 = $0 * 10 + $1 }) }
+  var t = time_t()
+  time(&t)
+  #if os(Windows)
+  var info = tm()
+  localtime_s(&info, &t)
+  #else
+  var info = localtime(&t)!.pointee
+  #endif
+  info.tm_year = values[0] - 1900
+  info.tm_mon = values[1] - 1
+  info.tm_mday = values[2]
+  if values.count > 4 {
+    info.tm_hour = values[3]
+    info.tm_min = values[4]
+  }
+  if values.count > 5 {
+    info.tm_sec = values[5]
+  }
+  return mktime(&info)
 }
