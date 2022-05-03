@@ -224,8 +224,8 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
 
 private func parseDate(_ buffer: UnsafeRawBufferPointer, separator: UInt8, at: Int) -> Double {
   let dateString = buffer.split(separator: separator, maxSplits: at + 1, omittingEmptySubsequences: false)[at]
-  let date = dateString.split(maxSplits: 6, omittingEmptySubsequences: false, whereSeparator: { $0 < UInt8(ascii: "0") && $0 > UInt8(ascii: "9")})
-  let values = date.prefix(6).map { $0.map { Int32($0) }.reduce(into: 0, { $0 = $0 * 10 + $1 }) }
+  let date = dateString.split(maxSplits: 6, omittingEmptySubsequences: false, whereSeparator: { $0 < UInt8(ascii: "0") || $0 > UInt8(ascii: "9")})
+  let values = date.prefix(6).map { $0.map { Int32($0) - 48 }.reduce(into: 0, { $0 = $0 * 10 + $1 }) }
   var t = time_t()
   time(&t)
   #if os(Windows)
