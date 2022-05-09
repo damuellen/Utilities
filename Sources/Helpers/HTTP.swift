@@ -8,6 +8,7 @@
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
 
+import Dispatch
 import Foundation
 
 #if canImport(CRT)
@@ -27,9 +28,16 @@ public class HTTP {
   public init(handler: @escaping (Request) -> Response) { self.handler = handler }
 
   public let handler: (Request) -> Response
-  private static var thread = Thread()
-  private static var serverActive = false
+  private static let staticSyncQ = DispatchQueue(label: "com.http.server.StaticSyncQ")
+  private static var dispatchQueue = DispatchQueue(
+    label: "com.http.server.queue", qos: .userInteractive)
+  private static var _serverActive = false
   private static var server: Server? = nil
+
+  static var serverActive: Bool {
+    get { return staticSyncQ.sync { _serverActive } }
+    set { staticSyncQ.sync { _serverActive = newValue } }
+  }
 
   public func start() {
     func runServer() throws {
@@ -44,14 +52,11 @@ public class HTTP {
         } catch { if HTTP.serverActive {} }
       }
     }
-    HTTP.thread = Thread(block: { do { try runServer() } catch {} })
-    HTTP.thread.start()
+    HTTP.dispatchQueue.async { do { try runServer() } catch {} }
   }
-  
   public func stop() {
     HTTP.serverActive = false
     try? HTTP.server?.stop()
-    HTTP.thread.cancel()
   }
 
   deinit { stop() }
