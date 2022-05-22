@@ -18,7 +18,7 @@ import Foundation
 #endif
 /// Create graphs using gnuplot.
 public final class Gnuplot: CustomStringConvertible {
-  #if canImport(Cocoa)
+  #if canImport(Cocoa) && !targetEnvironment(macCatalyst)
     public var image: NSImage? {
       guard let data = try? callAsFunction(.pngSmall(path: "")) else { return nil }
       #if swift(>=5.4)
