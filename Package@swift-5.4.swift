@@ -8,8 +8,7 @@ let package = Package(
   targets: [
     .target(name: "Libc"),
     .target(name: "CZLib"),
-    .target(name: "CIAPWSIF97"),
-    .target(name: "Physics", dependencies: ["Helpers", "CIAPWSIF97"]),
+    .target(name: "Physics", dependencies: ["Helpers"]),
     .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
     .target(
       name: "Helpers", dependencies: ["Libc", "CZLib",
