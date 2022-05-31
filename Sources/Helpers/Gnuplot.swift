@@ -198,7 +198,7 @@ public final class Gnuplot: CustomStringConvertible {
     let (s, l) = style.raw
     multiplot += multi ? 1 : 0
     let command =
-      "$data i \(i) u \(x):\(y) \(s) w \(l) ls \(Int.random(in: 11...17)) title columnheader(1)"
+      "$data i \(i) u \(x):\(y) \(s) w \(l) ls \(min(index + 11, 17)) title columnheader(1)"
     if let plot = userPlot {
       userPlot = plot + (multi ? "\nplot " : ", ") + command
     } else {
@@ -434,16 +434,9 @@ public final class Gnuplot: CustomStringConvertible {
     "object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"
   ]
 }
-#if os(Windows)
-  private let height = 720
-  private let width = 1255
-#elseif os(Linux)
-  private let height = 750
-  private let width = 1000
-#else
-  private let height = 800
-  private let width = 1255
-#endif
+
+private let height = 800
+private let width = 1255
 
 private func separated<T: FloatingPoint>(_ xys: [[T]]) -> String {
   xys.map { xy in xy.map { "\($0)" }.joined(separator: " ") }.joined(separator: "\n")
