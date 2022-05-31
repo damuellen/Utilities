@@ -198,7 +198,8 @@ public final class Gnuplot: CustomStringConvertible {
     let (s, l) = style.raw
     multiplot += multi ? 1 : 0
     let command =
-      "$data i \(i) u \(x):\(y) \(s) w \(l) ls \(min(i + 11, 17)) title columnheader(1)"
+      "$data i \(i) u \(x):\(y) \(s) w \(l) ls \(styles.removeLast()) title columnheader(1)"
+    styles.isEmpty { Gnuplot.styles = Array(stride(from: 11, through: 17, by: 1)).shuffled() }
     if let plot = userPlot {
       userPlot = plot + (multi ? "\nplot " : ", ") + command
     } else {
@@ -425,6 +426,7 @@ public final class Gnuplot: CustomStringConvertible {
       }
     }
   }
+  private var styles: [Int] = []
   private var multiplot: Int = 0
   private let datablock: String
   private let defaultPlot: String
