@@ -198,7 +198,7 @@ public final class Gnuplot: CustomStringConvertible {
     let (s, l) = style.raw
     multiplot += multi ? 1 : 0
     let command =
-      "$data i \(i) u \(x):\(y) \(s) w \(l) ls \(Int.random(in: 11...17)) title columnheader(1)"
+      "$data i \(i) u \(x):\(y) \(s) w \(l) ls \(min(index + 11, 17)) title columnheader(1)"
     if let plot = userPlot {
       userPlot = plot + (multi ? "\nplot " : ", ") + command
     } else {
