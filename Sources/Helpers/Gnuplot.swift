@@ -197,7 +197,7 @@ public final class Gnuplot: CustomStringConvertible {
   ) -> Self {
     let (s, l) = style.raw
     multiplot += multi ? 1 : 0
-    styles.isEmpty { styles = Array(stride(from: 11, through: 17, by: 1)).shuffled() }
+    if styles.isEmpty { styles = Array(stride(from: 11, through: 17, by: 1)).shuffled() }
     let command =
       "$data i \(i) u \(x):\(y) \(s) w \(l) ls \(styles.removeLast()) title columnheader(1)"
 
