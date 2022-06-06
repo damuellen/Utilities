@@ -47,18 +47,24 @@ import Foundation
      """
      var table = "\n<table>\n"
      if let headerRow = headerRow {
-       table += headerRow.isEmpty ? "" : "\t<tr>\n" + headerRow.map {
+       table += headerRow.isEmpty ? "" : "\t<tr>\n"
+         + "\t\t<th>index</th>\n" + headerRow.map {
            "\t\t<th>" + $0.description + "</th>\n"
          }.joined() + "\t</tr>\n"
      }
-     let rows: ArraySlice<[Double]>
+     var rows: ArraySlice<[Double]>
      if let range = range {
        rows = dataRows[range]
      } else {
-       rows = dataRows[...]
+       if dataRows.count > 10 {
+         rows = dataRows[..<5]
+         rows.append(contentsOf: dataRows[(dataRows.endIndex-5)...])
+       } else {
+         rows = dataRows[...]
+       }
      }
-     table += rows.map { row in
-       "\t<tr>\n" + row.map {
+     table += rows.indices.map { i in
+       "\t<tr>\n" + "\t\t<td>\(i)</td>\n" + rows[i].map {
          "\t\t<td>" + String(format: "%.2f", $0) + "</td>\n"
        }.joined() + "\t</tr>\n"
      }.joined()
