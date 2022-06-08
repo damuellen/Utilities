@@ -62,10 +62,10 @@ import Foundation
      if let range = range {
        table += dataRows[range].indices.map(row).joined()
      } else {
-       if dataRows.count > 10 {
-         table += dataRows[..<5].indices.map(row).joined()
+       if dataRows.count > 20 {
+         table += dataRows[..<10].indices.map(row).joined()
          table += "\t<tr>\n\t\t<td>...</td>\n" + dataRows[0].map { _ in "\t\t<td>...</td>\n" }.joined() + "\t</tr>\n"
-         table += dataRows[(dataRows.endIndex - 5)...].indices.map(row).joined()
+         table += dataRows[(dataRows.endIndex - 10)...].indices.map(row).joined()
        } else {
          table += dataRows[...].indices.map(row).joined()
        }
