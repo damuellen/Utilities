@@ -48,27 +48,25 @@ import Foundation
      var table = "\n<table>\n"
      if let headerRow = headerRow {
        table += headerRow.isEmpty ? "" : "\t<tr>\n"
-         + "\t\t<th>index</th>\n" + headerRow.map {
+         + "\t\t<th> </th>\n" + headerRow.map {
            "\t\t<th>" + $0.description + "</th>\n"
          }.joined() + "\t</tr>\n"
      }
-     var rows: ArraySlice<[Double]>
+     table += "\t<tr>\n"
+
+     let row = { i -> String in "\t\t<td>\(i)</td>\n" + dataRows[i].map { "\t\t<td>" + String(format: "%.2f", $0) + "</td>\n" }.joined() }
      if let range = range {
-       rows = dataRows[range]
+       table += dataRows[range].indices.map(row).joined()
      } else {
        if dataRows.count > 10 {
-         rows = dataRows[..<5]
-         rows.append(contentsOf: dataRows[(dataRows.endIndex-5)...])
+         table += dataRows[..<5].indices.map(row).joined()
+         table += "\t\t<td>...</td>\n" + dataRows[0].map { _ in "\t\t<td>...</td>\n" }.joined()
+         table += dataRows[(dataRows.endIndex - 5)...].indices.map(row).joined()
        } else {
-         rows = dataRows[...]
+         table += dataRows[...].indices.map(row).joined()
        }
      }
-     table += rows.indices.map { i in
-       "\t<tr>\n" + "\t\t<td>\(i)</td>\n" + rows[i].map {
-         "\t\t<td>" + String(format: "%.2f", $0) + "</td>\n"
-       }.joined() + "\t</tr>\n"
-     }.joined()
-     table += "</table>\n"
+     table += "\t</tr>\n</table>\n"
 
      let display = Python.import("IPython.display")
      display.display(display.HTML(data: html + table + "</body>\n</html>\n"))
