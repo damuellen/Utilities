@@ -127,7 +127,7 @@ public struct HTML: CustomStringConvertible {
     """
 
   private var raw: String {
-    let head = "<html lang=\"en\"><head>" + meta + style + "</head>\n<body>\n"
+    let head = "<html lang=\"en\"><head>" + meta + style + "<link rel=\"icon\" href=\"data:,\"></head>\n<body>\n"
     let tail = "</body>\n</html>\n"
     let full =
       "<button onclick=\"window.stop(); document.documentElement.requestFullscreen();\" style=\"position: fixed; left: 8px; top: 8px; z-index: 1;\">Fullscreen</button>\n"
