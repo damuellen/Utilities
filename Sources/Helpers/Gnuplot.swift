@@ -372,6 +372,29 @@ public final class Gnuplot: CustomStringConvertible {
       .joined(separator: ", \\\n")
   }
   
+  @available(macOS 10.12, *)
+  public init<T: FloatingPoint>(y1s: [[T]], y2s: [[T]] = [], titles: [String] = [], range: DateInterval) {
+    let missingTitles = y1s.count + y2s.count - titles.count
+    var titles = titles
+    if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
+    var header = titles.makeIterator()
+    self.datablock =
+      "\n$data <<EOD\n"
+      + y1s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
+      + "\n\n\n"
+      + y2s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
+      + "\n\n\nEOD\n\n"
+    let setting = ["xdata": "time", "timefmt": "'%s'", "format x": "'%k'",
+      "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
+    ]
+    self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
+    self.defaultPlot = "plot " + y1s.indices.map { i in
+      "$data i \(i) u ($0*\(range.duration / Double(y1s.count))):\(1) axes x1y1 w l ls \(i+21) title columnheader(1)"
+      }.joined(separator: ", \\\n") + y2s.indices.map { i in
+      "$data i \(i) u ($0*\(range.duration / Double(y2s.count))):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
+      }.joined(separator: ", \\\n")
+  }
+  
   public enum Style {
     case lines(smooth: Bool)
     case linePoints
