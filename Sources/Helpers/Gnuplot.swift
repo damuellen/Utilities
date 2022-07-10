@@ -385,9 +385,13 @@ public final class Gnuplot: CustomStringConvertible {
       + "\n\n\n"
       + y2s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\nEOD\n\n"
-    let setting = ["xdata": "time", "timefmt": "'%s'",
+    var setting = ["xdata": "time", "timefmt": "'%s'",
       "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
     ]
+    if !y2s.isEmpty {
+      setting["ytics"] = "nomirror"
+      setting["y2tics"] = ""
+    }
     self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
     self.defaultPlot = "plot " + y1s.indices.map { i in
       "$data i \(i) u ($0*\(range.duration / Double(y1s[i].count))):\(1) axes x1y1 w l ls \(i+21) title columnheader(1)"
