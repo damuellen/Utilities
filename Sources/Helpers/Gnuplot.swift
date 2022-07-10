@@ -384,14 +384,14 @@ public final class Gnuplot: CustomStringConvertible {
       + "\n\n\n"
       + y2s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\nEOD\n\n"
-    let setting = ["xdata": "time", "timefmt": "'%s'", "format x": "'%k'",
+    let setting = ["xdata": "time", "timefmt": "'%s'",
       "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
     ]
     self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
     self.defaultPlot = "plot " + y1s.indices.map { i in
-      "$data i \(i) u ($0*\(range.duration / Double(y1s.count))):\(1) axes x1y1 w l ls \(i+21) title columnheader(1)"
+      "$data i \(i) u ($0*\(range.duration / Double(y1s[i].count))):\(1) axes x1y1 w l ls \(i+21) title columnheader(1)"
       }.joined(separator: ", \\\n") + y2s.indices.map { i in
-      "$data i \(i) u ($0*\(range.duration / Double(y2s.count))):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
+      "$data i \(i) u ($0*\(range.duration / Double(y2s[i].count))):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
       }.joined(separator: ", \\\n")
   }
   
