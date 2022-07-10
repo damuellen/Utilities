@@ -105,6 +105,12 @@ extension Date: ExpressibleByStringLiteral {
   }
 }
 
+extension DateInterval {
+  public static var hour = DateInterval(start: .init(timeIntervalSince1970: 0), duration: 3600)
+  public static var day = DateInterval(start: .init(timeIntervalSince1970: 0), duration: 86400)
+  public static var week = DateInterval(start: .init(timeIntervalSince1970: 0), duration: 604800)
+}
+
 extension URL: ExpressibleByStringLiteral {
   public init(stringLiteral value: String) { self.init(fileURLWithPath: value) }
 }
