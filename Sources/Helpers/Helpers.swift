@@ -105,6 +105,7 @@ extension Date: ExpressibleByStringLiteral {
   }
 }
 
+@available(macOS 10.12, *)
 extension DateInterval {
   public static var hour = DateInterval(start: .init(timeIntervalSince1970: 0), duration: 3600)
   public static var day = DateInterval(start: .init(timeIntervalSince1970: 0), duration: 86400)
