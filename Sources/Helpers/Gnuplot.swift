@@ -380,9 +380,9 @@ public final class Gnuplot: CustomStringConvertible {
     var header = titles.makeIterator()
     self.datablock =
       "\n$data <<EOD\n"
-      + y1s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
+      + y1s.map { header.next()! + "\n" + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\n"
-      + y2s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
+      + y2s.map { header.next()! + "\n" + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\nEOD\n\n"
     let setting = ["xdata": "time", "timefmt": "'%s'",
       "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
@@ -391,7 +391,7 @@ public final class Gnuplot: CustomStringConvertible {
     self.defaultPlot = "plot " + y1s.indices.map { i in
       "$data i \(i) u ($0*\(range.duration / Double(y1s[i].count))):\(1) axes x1y1 w l ls \(i+21) title columnheader(1)"
       }.joined(separator: ", \\\n") + (y2s.isEmpty ? "" : ", \\\n") + y2s.indices.map { i in
-      "$data i \(i) u ($0*\(range.duration / Double(y2s[i].count))):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
+      "$data i \(i + xy1s.endIndex) u ($0*\(range.duration / Double(y2s[i].count))):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
       }.joined(separator: ", \\\n")
   }
   
