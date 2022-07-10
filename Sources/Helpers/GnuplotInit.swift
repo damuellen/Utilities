@@ -37,6 +37,26 @@ extension Gnuplot {
   }
 }
 
+@available(macOS 10.12, *)
+extension DateInterval {
+  public static var Hour = DateInterval(start: .init(timeIntervalSinceReferenceDate: 0), duration: 3600)
+  public static var Day = DateInterval(start: .init(timeIntervalSinceReferenceDate: 0), duration: 86400)
+  public static var Week = DateInterval(start: .init(timeIntervalSinceReferenceDate: 0), duration: 604800)
+  public static var Jan = DateInterval(start: .init(timeIntervalSinceReferenceDate: 0), duration: 86400 * 31)
+  public static var Feb = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 31), duration: 86400 * 28)
+  public static var Mar = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 59), duration: 86400 * 31)
+  public static var Apr = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 90), duration: 86400 * 30)
+  public static var May = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 120), duration: 86400 * 31)
+  public static var Jun = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 151), duration: 86400 * 30)
+  public static var Jul = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 181), duration: 86400 * 31)
+  public static var Aug = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 212), duration: 86400 * 31)
+  public static var Sep = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 243), duration: 86400 * 30)
+  public static var Oct = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 273), duration: 86400 * 31)
+  public static var Nov = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 304), duration: 86400 * 30)
+  public static var Dec = DateInterval(start: .init(timeIntervalSinceReferenceDate: 86400 * 334), duration: 86400 * 31)
+}
+
+@available(macOS 10.12, *)
 extension TimeInterval {
   public static var Jan = Int(DateInterval.Jan.start.timeIntervalSinceReferenceDate / 3600)
   public static var Feb = Int(DateInterval.Feb.start.timeIntervalSinceReferenceDate / 3600)
