@@ -36,3 +36,18 @@ extension Gnuplot {
     self.init(y1s: y1s.map(Array.init), y2s: y2s.map(Array.init), titles: titles, range: range)
   }
 }
+
+extension TimeInterval {
+  public static var Jan = Int(DateInterval.Jan.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Feb = Int(DateInterval.Feb.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Mar = Int(DateInterval.Mar.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Apr = Int(DateInterval.Apr.start.timeIntervalSinceReferenceDate / 3600)
+  public static var May = Int(DateInterval.May.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Jun = Int(DateInterval.Jun.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Jul = Int(DateInterval.Jul.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Aug = Int(DateInterval.Aug.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Sep = Int(DateInterval.Sep.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Oct = Int(DateInterval.Oct.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Nov = Int(DateInterval.Nov.start.timeIntervalSinceReferenceDate / 3600)
+  public static var Dec = Int(DateInterval.Dec.start.timeIntervalSinceReferenceDate / 3600)
+}
