@@ -377,12 +377,13 @@ public final class Gnuplot: CustomStringConvertible {
     let missingTitles = y1s.count + y2s.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
+    titles = titles.map { $0 + "\n" }
     var header = titles.makeIterator()
     self.datablock =
       "\n$data <<EOD\n"
-      + y1s.map { header.next()! + "\n" + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
+      + y1s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\n"
-      + y2s.map { header.next()! + "\n" + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
+      + y2s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\nEOD\n\n"
     let setting = ["xdata": "time", "timefmt": "'%s'",
       "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
