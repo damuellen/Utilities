@@ -57,7 +57,7 @@ extension DateInterval {
 }
 
 @available(macOS 10.12, *)
-extension TimeInterval {
+enum Hours {
   public static var Jan = Int(DateInterval.Jan.start.timeIntervalSinceReferenceDate / 3600)
   public static var Feb = Int(DateInterval.Feb.start.timeIntervalSinceReferenceDate / 3600)
   public static var Mar = Int(DateInterval.Mar.start.timeIntervalSinceReferenceDate / 3600)
@@ -70,4 +70,20 @@ extension TimeInterval {
   public static var Oct = Int(DateInterval.Oct.start.timeIntervalSinceReferenceDate / 3600)
   public static var Nov = Int(DateInterval.Nov.start.timeIntervalSinceReferenceDate / 3600)
   public static var Dec = Int(DateInterval.Dec.start.timeIntervalSinceReferenceDate / 3600)
+}
+
+@available(macOS 10.12, *)
+enum Days {
+  public static var Jan = Int(DateInterval.Jan.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Feb = Int(DateInterval.Feb.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Mar = Int(DateInterval.Mar.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Apr = Int(DateInterval.Apr.start.timeIntervalSinceReferenceDate / 86400)
+  public static var May = Int(DateInterval.May.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Jun = Int(DateInterval.Jun.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Jul = Int(DateInterval.Jul.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Aug = Int(DateInterval.Aug.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Sep = Int(DateInterval.Sep.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Oct = Int(DateInterval.Oct.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Nov = Int(DateInterval.Nov.start.timeIntervalSinceReferenceDate / 86400)
+  public static var Dec = Int(DateInterval.Dec.start.timeIntervalSinceReferenceDate / 86400)
 }
