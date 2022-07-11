@@ -256,7 +256,7 @@ public final class Gnuplot: CustomStringConvertible {
       settings["format x"] = "'%R'"
     }
     if xrange.duration > 86400 * 7 {
-      settings["format x"] = "'%d.%d'"
+      settings["format x"] = "'%d.%m'"
     } 
     return self
   }
@@ -390,7 +390,7 @@ public final class Gnuplot: CustomStringConvertible {
       + "\n\n\n"
       + y2s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\nEOD\n\n"
-    var setting = ["xdata": "time", "timefmt": "'%s'", "xtics rotate": "",
+    var setting = ["xdata": "time", "timefmt": "'%s'",
       "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
     ]
     if !y2s.isEmpty {
@@ -400,14 +400,13 @@ public final class Gnuplot: CustomStringConvertible {
 
     if range.duration > 86400 {   
       setting["xtics"] = "86400"
-      setting["format x"] = "'%a'"
+      setting["format x"] = "'%j'"
     } else {
       setting["xtics"] = "1800"
       setting["format x"] = "'%R'"
+      setting["xtics rotate"] = ""
     }
-    if range.duration > 86400 * 7 {
-      setting["format x"] = "'%d.%d'"
-    }
+
     self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
     self.defaultPlot = "plot " + y1s.indices.map { i in
       "$data i \(i) u ($0*\(range.duration / Double(y1s[i].count))+\(range.start.timeIntervalSince1970)):\(1) axes x1y1 w l ls \(i+11) title columnheader(1)"
