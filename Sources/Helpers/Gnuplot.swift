@@ -241,6 +241,26 @@ public final class Gnuplot: CustomStringConvertible {
     settings["yrange"] = "\(y.lowerBound):\(y.upperBound)"
     return self
   }
+  @available(macOS 10.12, *)
+  @discardableResult public func set(xrange: DateInterval) -> Self {
+    settings["xrange"] = "\(xrange.start.timeIntervalSince1970):\(xrange.end.timeIntervalSince1970)"
+    settings["xdata"] = "time"
+    settings["timefmt"] = "'%s'"    
+    settings["xtics rotate"] = ""
+    
+    if xrange.duration > 86400 {   
+      settings["xtics"] = "86400"
+      settings["format x"] = "'%a'"
+    } else {
+      settings["xtics"] = "1800"
+      settings["format x"] = "'%R'"
+    }
+    if xrange.duration > 86400 * 7 {
+      settings["format x"] = "'%d.%d'"
+    } 
+    return self
+  }
+  
   private static func settings(_ style: Style) -> [String: String] {
     var dict = [
       "style line 18": "lt 1 lw 1 dashtype 3 lc rgb 'black'",
@@ -370,12 +390,23 @@ public final class Gnuplot: CustomStringConvertible {
       + "\n\n\n"
       + y2s.map { header.next()! + $0.map { "\($0)" }.joined(separator: "\n") }.joined(separator: "\n\n\n")
       + "\n\n\nEOD\n\n"
-    var setting = ["xdata": "time", "timefmt": "'%s'",
+    var setting = ["xdata": "time", "timefmt": "'%s'", "xtics rotate": "",
       "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
     ]
     if !y2s.isEmpty {
       setting["ytics"] = "nomirror"
       setting["y2tics"] = ""
+    }
+
+    if range.duration > 86400 {   
+      setting["xtics"] = "86400"
+      setting["format x"] = "'%a'"
+    } else {
+      setting["xtics"] = "1800"
+      setting["format x"] = "'%R'"
+    }
+    if range.duration > 86400 * 7 {
+      setting["format x"] = "'%d.%d'"
     }
     self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
     self.defaultPlot = "plot " + y1s.indices.map { i in
