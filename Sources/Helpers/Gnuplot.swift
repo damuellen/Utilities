@@ -258,12 +258,13 @@ public final class Gnuplot: CustomStringConvertible {
       "label": "textcolor rgb 'black'",
       "key": "above tc ls 18",
     ]
-
-    let palette = ["0072bd","d95319","edb120'","7e2f8e'","77ac30","4dbeee'","a2142f"]
-    let pt = Array(1...7).shuffled()
+    
+    let dark = ["1F78B4", "33A02C", "E31A1C", "FF7F00"]
+    let light = ["A6CEE3", "B2DF8A", "FB9A99", "FDBF6F"]
+    let pt = [4,6,8,10].shuffled()
     pt.indices.map { i in
-      dict["style line \(i+11)"] = "lt 1 \(lw) pt \(pt[i]) \(ps) lc rgb '#\(palette[i])'"
-      dict["style line \(i+21)"] = "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#\(palette[i])'"
+      dict["style line \(i+11)"] = "lt 1 \(lw) pt \(pt[i]) \(ps) lc rgb '#\(dark[i])'"
+      dict["style line \(i+21)"] = "lt 1 \(lw) pt \(pt[i]+1) \(ps) lc rgb '#\(light[i])'"
     }
 
     return dict
