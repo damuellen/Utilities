@@ -251,27 +251,21 @@ public final class Gnuplot: CustomStringConvertible {
       lw = "lw 1.5"
       ps = "ps 1.0"
     }
-    let pt = Array(1...7).shuffled()
-    let dict = [
-      "style line 11": "lt 1 \(lw) pt \(pt[0]) \(ps) lc rgb '#0072bd'",
-      "style line 12": "lt 1 \(lw) pt \(pt[1]) \(ps) lc rgb '#d95319'",
-      "style line 13": "lt 1 \(lw) pt \(pt[2]) \(ps) lc rgb '#edb120'",
-      "style line 14": "lt 1 \(lw) pt \(pt[3]) \(ps) lc rgb '#7e2f8e'",
-      "style line 15": "lt 1 \(lw) pt \(pt[4]) \(ps) lc rgb '#77ac30'",
-      "style line 16": "lt 1 \(lw) pt \(pt[5]) \(ps) lc rgb '#4dbeee'",
-      "style line 17": "lt 1 \(lw) pt \(pt[6]) \(ps) lc rgb '#a2142f'",
+
+    var dict = [
       "style line 18": "lt 1 lw 1 dashtype 3 lc rgb 'black'",
       "style line 19": "lt 0 lw 0.5 lc rgb 'black'",
-      "style line 21": "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#0072bd'",
-      "style line 22": "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#d95319'",
-      "style line 23": "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#edb120'",
-      "style line 24": "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#7e2f8e'",
-      "style line 25": "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#77ac30'",
-      "style line 26": "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#4dbeee'",
-      "style line 27": "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#a2142f'",
       "label": "textcolor rgb 'black'",
       "key": "above tc ls 18",
     ]
+
+    let palette = ["0072bd","d95319","edb120'","7e2f8e'","77ac30","4dbeee'","a2142f"]
+    let pt = Array(1...7).shuffled()
+    pt.indices.map { i in
+      dict["style line \(i+11)"] = "lt 1 \(lw) pt \(pt[i]) \(ps) lc rgb '#\(palette[i])'"
+      dict["style line \(i+21)"] = "lt 1 lw 3 pt 9 ps 0.8 lc rgb '#\(palette[i])'"
+    }
+
     return dict
   }
 
