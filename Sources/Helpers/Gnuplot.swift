@@ -242,16 +242,6 @@ public final class Gnuplot: CustomStringConvertible {
     return self
   }
   private static func settings(_ style: Style) -> [String: String] {
-    let lw: String
-    let ps: String
-    if case .points = style {
-      lw = "lw 1.5"
-      ps = "ps 1.0"
-    } else {
-      lw = "lw 1.5"
-      ps = "ps 1.0"
-    }
-
     var dict = [
       "style line 18": "lt 1 lw 1 dashtype 3 lc rgb 'black'",
       "style line 19": "lt 0 lw 0.5 lc rgb 'black'",
@@ -263,8 +253,8 @@ public final class Gnuplot: CustomStringConvertible {
     let light = ["A6CEE3", "B2DF8A", "FB9A99", "FDBF6F"]
     let pt = [4,6,8,10].shuffled()
     pt.indices.forEach { i in
-      dict["style line \(i+11)"] = "lt 1 \(lw) pt \(pt[i]) \(ps) lc rgb '#\(dark[i])'"
-      dict["style line \(i+21)"] = "lt 1 \(lw) pt \(pt[i]+1) \(ps) lc rgb '#\(light[i])'"
+      dict["style line \(i+11)"] = "lt 1 lw 1.5 pt \(pt[i]) ps 1.0 lc rgb '#\(dark[i])'"
+      dict["style line \(i+21)"] = "lt 1 lw 1.5 pt \(pt[i]+1) ps 1.0 lc rgb '#\(light[i])'"
     }
 
     return dict
