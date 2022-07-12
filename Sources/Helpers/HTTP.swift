@@ -26,7 +26,7 @@ import Foundation
 
 public class HTTP {
   public init(handler: @escaping (Request) -> Response) { self.handler = handler }
-  public var port: Int { Int(self.server.port) }
+  public var port: Int { Int(HTTP.server!.port) }
   public let handler: (Request) -> Response
   private static let staticSyncQ = DispatchQueue(label: "com.http.server.StaticSyncQ")
   private static var dispatchQueue = DispatchQueue(
