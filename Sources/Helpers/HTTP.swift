@@ -26,7 +26,7 @@ import Foundation
 
 public class HTTP {
   public init(handler: @escaping (Request) -> Response) { self.handler = handler }
-
+  public var port: Int { Int(self.server.port) }
   public let handler: (Request) -> Response
   private static let staticSyncQ = DispatchQueue(label: "com.http.server.StaticSyncQ")
   private static var dispatchQueue = DispatchQueue(
@@ -42,7 +42,11 @@ public class HTTP {
   public func start() {
     func runServer() throws {
       if HTTP.serverActive { return }
+      #if os(Windows)
+      HTTP.server = try Server(port: Int.random(in: 8000...8800))
+      #else
       HTTP.server = try Server(port: 9080)
+      #endif
       HTTP.serverActive = true
       while HTTP.serverActive {
         do {
