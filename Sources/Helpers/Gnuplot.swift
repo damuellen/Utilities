@@ -310,10 +310,11 @@ public final class Gnuplot: CustomStringConvertible {
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
 
     let table: [String] = xys.enumerated().map { i, t -> String in
-      titles[i] + "\n"
-      + (xylabels.endIndex > i
-         ? zip(t, xylabels[i]).map { xy, label -> String in xy.vector + label }.joined(separator: "\n")
-         : t.map { xy in xy.vector }.joined(separator: "\n"))
+      if xylabels.endIndex > i {
+        return titles[i] + "\n" + zip(t, xylabels[i]).map { xy, label -> String in xy.vector + label }.joined(separator: "\n")
+      } else {
+        return titles[i] + "\n" + t.map { xy in xy.vector }.joined(separator: "\n")
+      }
     }
 
     self.datablock = "\n$data <<EOD\n" + table.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
