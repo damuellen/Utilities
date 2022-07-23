@@ -11,29 +11,34 @@
 import Foundation
 
 extension Gnuplot {
-  public convenience init<T: FloatingPoint>(y1: [[T]], y2: [[T]]) { self.init(y1s: [y1], y2s: [y2]) }
-  public convenience init<S: Sequence, F: FloatingPoint>(xys: S..., labels: [String]..., titles: [String] = [], style: Style = .linePoints) where S.Element == SIMD2<F> {
-    self.init(xys: xys.map { xy in xy.map { [$0.x, $0.y] } }, xylabels: labels, titles: titles, style: style) 
+  public convenience init<Scalar: FloatingPoint>(y1: [[Scalar]], y2: [[Scalar]])
+  where Scalar: LosslessStringConvertible {
+    self.init(y1s: [y1], y2s: [y2])
   }
-  public convenience init<S: Sequence, F: FloatingPoint>(xys: S..., labels: [String]..., titles: [String] = [], style: Style = .linePoints) where S.Element == [F] {
+  public convenience init<Series: Sequence, Scalar: FloatingPoint>(xys: Series..., labels: [String]..., titles: [String] = [], style: Style = .linePoints)
+  where Series.Element == SIMD2<Scalar>, Scalar: LosslessStringConvertible {
+    self.init(xys: xys.map { xy in xy.map { [$0.x, $0.y] } }, xylabels: labels, titles: titles, style: style)
+  }
+  public convenience init<Series: Sequence, Scalar: FloatingPoint>(xys: Series..., labels: [String]..., titles: [String] = [], style: Style = .linePoints)
+  where Series.Element == [Scalar], Scalar: LosslessStringConvertible {
     self.init(xys: xys.map { xy in xy.map { $0 } }, xylabels: labels, titles: titles, style: style)
   }
-  @_disfavoredOverload public convenience init<S: Sequence, F: FloatingPoint>(xs: S..., ys: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
+  @_disfavoredOverload public convenience init<Series: Sequence, Scalar: FloatingPoint>(xs: Series..., ys: Series..., labels: [String]..., titles: String..., style: Style = .linePoints)
+  where Series.Element == Scalar, Scalar: LosslessStringConvertible {
     self.init(xys: zip(xs, ys).map { a, b in zip(a, b).map { [$0, $1] } }, xylabels: labels, titles: titles, style: style)
   }
-  public convenience init<S: Collection, F: FloatingPoint>(xs: S, ys: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
-    let xys = xs.indices.map { index -> [F] in [xs[index]] + ys.map { $0[index] } }
+  public convenience init<Series: Collection, Scalar: FloatingPoint>(xs: Series, ys: Series..., labels: [String]..., titles: String..., style: Style = .linePoints)
+  where Series.Element == Scalar, Scalar: LosslessStringConvertible {
+    let xys = xs.indices.map { index -> [Scalar] in [xs[index]] + ys.map { $0[index] } }
     self.init(xys: [xys], xylabels: labels, titles: titles, style: style)
   }
-  public convenience init<S: Sequence, F: FloatingPoint>(ys: S..., labels: [String]..., titles: String..., style: Style = .linePoints) where S.Element == F {
+  public convenience init<Series: Sequence, Scalar: FloatingPoint>(ys: Series..., labels: [String]..., titles: String..., style: Style = .linePoints)
+  where Series.Element == Scalar, Scalar: LosslessStringConvertible {
     self.init(xys: ys.map { $0.map { [$0] } }, xylabels: labels, titles: titles, style: style)
   }
-  public convenience init<T: FloatingPoint>(xy1s: [[T]]..., xy2s: [[T]]..., titles: String..., style: Style = .linePoints) {
+  public convenience init<Scalar: FloatingPoint>(xy1s: [[Scalar]]..., xy2s: [[Scalar]]..., titles: String..., style: Style = .linePoints)
+  where Scalar: LosslessStringConvertible {
     self.init(xy1s: xy1s, xy2s: xy2s, titles: titles, style: style)
-  }
-  @available(macOS 10.12, *)
-  public convenience init<S: Sequence, F: FloatingPoint>(y1s: S..., y2s: S..., titles: [String] = [], range: DateInterval) where S.Element == F {
-    self.init(y1s: y1s.map(Array.init), y2s: y2s.map(Array.init), titles: titles, range: range)
   }
 }
 
