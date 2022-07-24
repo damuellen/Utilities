@@ -447,11 +447,11 @@ public final class Gnuplot: CustomStringConvertible {
     }
   }
   public enum Terminal {
-    case svg(path: String)
-    case pdf(path: String)
-    case png(path: String)
-    case pngSmall(path: String)
-    case pngLarge(path: String)
+    case svg(_ toFile: String)
+    case pdf(_ toFile: String)
+    case png(_ toFile: String)
+    case pngSmall(_ toFile: String)
+    case pngLarge(_ toFile: String)
     var output: [String: String] {
 #if os(Linux)
       let font = "enhanced font 'Times,"
