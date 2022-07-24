@@ -280,8 +280,7 @@ public final class Gnuplot: CustomStringConvertible {
   }
 
   public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
-  (y1s: Series, y2s: Series) where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible
-  {
+  (y1s: Series, y2s: Series) where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
     self.datablock =
     "\n$data <<EOD\n"
     + y1s.map { tensor -> String in tensor.transposed().map(\.vector).joined(separator: "\n") }.joined(separator: "\n\n\n")
@@ -386,8 +385,7 @@ public final class Gnuplot: CustomStringConvertible {
   @available(macOS 10.12, *)
   public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
   (y1s: Series, y2s: Series, titles: [String] = [], range: DateInterval)
-  where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible
-  {
+  where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
     let missingTitles = y1s.count + y2s.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
