@@ -20,7 +20,7 @@ import PythonKit
 public final class Gnuplot: CustomStringConvertible {
 #if canImport(Cocoa) && !targetEnvironment(macCatalyst)
   public var image: NSImage? {
-    guard let data = try? callAsFunction(.pngSmall(path: "")) else { return nil }
+    guard let data = try? callAsFunction(.pngSmall("")) else { return nil }
 #if swift(>=5.4)
     return NSImage(data: data)
 #else
@@ -43,7 +43,7 @@ public final class Gnuplot: CustomStringConvertible {
 #endif
   public var svg: String? {
     do {
-      guard let data = try callAsFunction(.svg(path: "")) else { return nil }
+      guard let data = try callAsFunction(.svg("")) else { return nil }
       let svg = data.dropFirst(270)
       return #"<svg width="\#(width+25)" height="\#(height)" viewBox="0 0 \#(width+25) \#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
       + String(decoding: svg, as: Unicode.UTF8.self)
