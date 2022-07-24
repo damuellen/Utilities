@@ -89,7 +89,7 @@ class TCPSocket: CustomStringConvertible {
   let listening: Bool
   private var socket: SOCKET!
   private var socketAddress = UnsafeMutablePointer<sockaddr_in>.allocate(capacity: 1)
-  public private(set) var port: UInt16
+  private(set) var port: UInt16
   private func isNotNegative(r: CInt) -> Bool { return r != -1 }
   private func isZero(r: CInt) -> Bool { return r == 0 }
   private func attempt<T>(
@@ -310,7 +310,7 @@ extension HTTP {
       }
     }
     let tcpSocket: TCPSocket
-    var port: UInt16 { tcpSocket.port }
+
     public init(port: UInt16?) throws { tcpSocket = try TCPSocket(port: port) }
     init(socket: TCPSocket) { tcpSocket = socket }
     public class func create(port: UInt16?) throws -> Server { return try Server(port: port) }
