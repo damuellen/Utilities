@@ -278,8 +278,8 @@ public final class Gnuplot: CustomStringConvertible {
 
     return dict
   }
-
-  public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
+  
+  public init<Scalar: FloatingPoint, Vector: Collection, Tensor: RandomAccessCollection, Series: Collection>
   (y1s: Series, y2s: Series) where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
     self.datablock =
     "\n$data <<EOD\n"
