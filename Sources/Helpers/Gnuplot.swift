@@ -279,7 +279,7 @@ public final class Gnuplot: CustomStringConvertible {
     return dict
   }
 
-  public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
+  public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
   (y1s: Series, y2s: Series) where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
     self.datablock =
     "\n$data <<EOD\n"
@@ -301,7 +301,7 @@ public final class Gnuplot: CustomStringConvertible {
     }.joined(separator: "\n")
   }
 
-  public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
+  public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
   (xys: Series, xylabels: [[String]] = [], titles: [String] = [], style: Style = .linePoints)
   where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
     let missingTitles = xys.count - titles.count
@@ -341,7 +341,7 @@ public final class Gnuplot: CustomStringConvertible {
     }.joined(separator: ", \\\n"))
   }
 
-  public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
+  public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
   (xy1s: Series, xy2s: Series, titles: [String] = [], style: Style = .linePoints)
   where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
     let missingTitles = xy1s.count + xy2s.count - titles.count
@@ -383,7 +383,7 @@ public final class Gnuplot: CustomStringConvertible {
   }
 
   @available(macOS 10.12, *)
-  public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
+  public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
   (y1s: Series, y2s: Series, titles: [String] = [], range: DateInterval)
   where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
     let missingTitles = y1s.count + y2s.count - titles.count
@@ -505,6 +505,6 @@ extension Array where Element == String {
 extension Dictionary where Key == String, Value == String {
   var concatenated: String { self.map { "set " + $0.key + " " + $0.value + "\n" }.joined() }
 }
-extension RandomAccessCollection where Element: FloatingPoint, Element: LosslessStringConvertible {
+extension Collection where Element: FloatingPoint, Element: LosslessStringConvertible {
   var vector: String { self.lazy.map(String.init).joined(separator: " ") }
 }
