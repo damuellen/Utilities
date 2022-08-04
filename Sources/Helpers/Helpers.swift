@@ -122,15 +122,9 @@ extension String {
   }
   
   @inlinable public subscript(_ i: Int) -> String {
-    let idx1 = self.index(self.startIndex, offsetBy: i)
+    let idx1 = self.index(self.startIndex, offsetBy: min(i, self.endIndex-1))
     let idx2 = self.index(idx1, offsetBy: 1)
     return String(self[idx1..<idx2])
-  }
-
-  @inlinable public subscript(_ range: Range<Int>) -> String {
-    let start = self.index(self.startIndex, offsetBy: range.lowerBound)
-    let end = self.index(self.startIndex, offsetBy: range.upperBound)
-    return String(self[start ..< end])
   }
   
   @inlinable public subscript(_ range: CountableRange<Int>) -> String {
@@ -209,19 +203,13 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
   return { value in a0 + a1 * value }
 }
 #if swift(>=5.4)
-  public typealias XY = SIMD2<Double>
+public typealias XY = SIMD2<Double>
 
-  extension Sequence where Element == XY {
-    public func plot(_ terminal: Gnuplot.Terminal) -> Data? {
-      try? Gnuplot(xys: self, style: .points)(terminal)
-    }
-  }
-
-  @inlinable public func evaluate(
-    inDomain range: ClosedRange<Double>, step: Double, f: (Double) -> Double
-  ) -> [[Double]] {
-    stride(from: range.lowerBound, through: range.upperBound, by: step).map { [$0, f($0)] }
-  }
+@inlinable public func evaluate(
+  inDomain range: ClosedRange<Double>, step: Double, f: (Double) -> Double
+) -> [[Double]] {
+  stride(from: range.lowerBound, through: range.upperBound, by: step).map { [$0, f($0)] }
+}
 #endif
 extension Comparable {
   public mutating func clamp(to limits: ClosedRange<Self>) {
