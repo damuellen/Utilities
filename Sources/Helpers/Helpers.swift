@@ -121,6 +121,18 @@ extension String {
     return outString
   }
   
+  @inlinable public subscript(_ i: Int) -> String {
+    let idx1 = self.index(self.startIndex, offsetBy: i)
+    let idx2 = self.index(idx1, offsetBy: 1)
+    return String(self[idx1..<idx2])
+  }
+
+  @inlinable public subscript(_ range: Range<Int>) -> String {
+    let start = self.index(self.startIndex, offsetBy: range.lowerBound)
+    let end = self.index(self.startIndex, offsetBy: range.upperBound)
+    return String(self[start ..< end])
+  }
+  
   @inlinable public subscript(_ range: CountableRange<Int>) -> String {
     let start = self.index(self.startIndex, offsetBy: max(0, range.lowerBound))
     let end = self.index(start, offsetBy: min(self.count - range.lowerBound, range.upperBound - range.lowerBound))
