@@ -110,7 +110,7 @@ extension URL: ExpressibleByStringLiteral {
 }
 
 extension String {
-  public func leftpad(length: Int, character: Character = " ") -> String {
+  @inlinable public func leftpad(_ length: Int, character: Character = " ") -> String {
     var outString: String = self
     let extraLength = length - outString.count
     var i = 0
@@ -119,6 +119,17 @@ extension String {
       i += 1
     }
     return outString
+  }
+  
+  @inlinable public subscript(_ range: CountableRange<Int>) -> String {
+    let start = self.index(self.startIndex, offsetBy: max(0, range.lowerBound))
+    let end = self.index(start, offsetBy: min(self.count - range.lowerBound, range.upperBound - range.lowerBound))
+    return String(self[start..<end])
+  }
+
+  @inlinable public subscript(_ range: CountablePartialRangeFrom<Int>) -> String {
+    let start = self.index(self.startIndex, offsetBy: max(0, range.lowerBound))
+    return String(self[start...])
   }
 }
 
