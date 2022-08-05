@@ -43,7 +43,7 @@ public struct CSVReader {
       let formatted = Array.justified(dataRows[range], minWidth: minWidth)
       let width = (terminalWidth() / formatted.1 + 1) * formatted.1 + 1
       return String(
-        headerRow.map { $0.leftpad(length: formatted.1) }
+        headerRow.map { $0.leftpad(formatted.1) }
           .joined(separator: " ").prefix(width)) + "\n" + formatted.0
     }
     return Array.justified(dataRows[range]).0
@@ -155,7 +155,7 @@ extension Array where Element == Double {
     return (
       array.map { row in
         String(
-          row.map { String(format: "%.1f", $0).leftpad(length: m + 2) }.joined(separator: " ")
+          row.map { String(format: "%.1f", $0).leftpad(m + 2) }.joined(separator: " ")
             .prefix(width))
       }.joined(separator: "\n"), m + 2
     )
