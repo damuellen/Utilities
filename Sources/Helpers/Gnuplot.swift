@@ -289,7 +289,7 @@ public final class Gnuplot: CustomStringConvertible {
     + "\n\n\nEOD\n\n"
     let setting = [
       "key": "off", "xdata": "time", "timefmt": "'%s'", "format x": "'%k'",
-      "xtics": "21600 ", "yrange": "0:1", "ytics": "0.2", "term": "pdfcairo size 7.1, 10",
+      "xtics": "21600 ", "yrange": "0:1", "ytics": "0.25", "term": "pdfcairo size 7.1, 10",
     ]
     self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
     let y = y1s.count
