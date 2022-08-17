@@ -196,15 +196,23 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
 
   return { value in a0 + a1 * value }
 }
-#if swift(>=5.4)
-public typealias XY = SIMD2<Double>
 
-@inlinable public func evaluate(
-  inDomain range: ClosedRange<Double>, step: Double, f: (Double) -> Double
-) -> [[Double]] {
-  stride(from: range.lowerBound, through: range.upperBound, by: step).map { [$0, f($0)] }
+extension ClosedRange where Bound == Double {
+  @inlinable public static func / (range: ClosedRange<Double>, _ count: Int) -> (interval: Double, numbers: [Double]) {
+    let interval = (range.upperBound - range.lowerBound) / Double(count)
+    let numbers = Array(stride(from: range.lowerBound, through: range.upperBound, by: interval))
+    return (interval, numbers)
+  }
 }
-#endif
+
+extension Range where Bound == Double {
+  @inlinable public static func / (range: Range<Double>, _ count: Int) -> (interval: Double, numbers: [Double]) {
+    let interval = (range.upperBound - range.lowerBound) / Double(count)
+    let numbers = Array(stride(from: range.lowerBound, to: range.upperBound, by: interval))
+    return (interval, numbers)
+  }
+}
+
 extension Comparable {
   public mutating func clamp(to limits: ClosedRange<Self>) {
     self = min(max(self, limits.lowerBound), limits.upperBound)
