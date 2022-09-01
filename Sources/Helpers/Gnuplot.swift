@@ -477,14 +477,14 @@ public final class Gnuplot: CustomStringConvertible {
   ]
 }
 #if os(Windows)
-private let height = 720
-private let width = 1255
+public let height = 720
+public let width = 1255
 #elseif os(Linux)
-private let height = 750
-private let width = 1000
+public let height = 750
+public let width = 1000
 #else
-private let height = 800
-private let width = 1255
+public let height = 800
+public let width = 1255
 #endif
 
 extension Array where Element == String {
