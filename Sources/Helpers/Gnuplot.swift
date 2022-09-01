@@ -51,7 +51,7 @@ public final class Gnuplot: CustomStringConvertible {
 
   public func svg(width: Int = width, height: Int = height)-> String? {
     do {
-      guard let data = try callAsFunction(.svg(width: width, height: heigth)) else { return nil }
+      guard let data = try callAsFunction(.svg(width: width, height: height)) else { return nil }
       let svg = data.dropFirst(270)
       return #"<svg width="\#(width+25)" height="\#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
       + String(decoding: svg, as: Unicode.UTF8.self)
