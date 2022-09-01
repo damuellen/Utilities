@@ -13,9 +13,7 @@ import Foundation
 #if canImport(Cocoa)
 import Cocoa
 #endif
-#if canImport(PythonKit)
-import PythonKit
-#endif
+
 /// Create graphs using gnuplot.
 public final class Gnuplot: CustomStringConvertible {
 #if canImport(Cocoa) && !targetEnvironment(macCatalyst)
@@ -28,30 +26,7 @@ public final class Gnuplot: CustomStringConvertible {
 #endif
   }
 #endif
-#if canImport(PythonKit)
-  @discardableResult public func display() -> Gnuplot {
-    settings["term"] = "svg size \(width),\(height)"
-    settings["object"] =
-    "rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"
-    guard let svg = svg else { return self }
-    settings.removeValue(forKey: "term")
-    settings.removeValue(forKey: "object")
-    let display = Python.import("IPython.display")
-    display.display(display.SVG(data: svg))
-    return self
-  }
-#endif
-  public var svg: String? {
-    do {
-      guard let data = try callAsFunction(.svg("")) else { return nil }
-      let svg = data.dropFirst(270)
-      return #"<svg width="\#(width+25)" height="\#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
-      + String(decoding: svg, as: Unicode.UTF8.self)
-    } catch {
-      print(error)
-      return nil
-    }
-  }
+
   public init(data: String, style: Style = .linePoints) {
     self.datablock = "\n$data <<EOD\n" + data + "\n\n\nEOD\n\n"
     self.defaultPlot = "plot $data"
@@ -73,6 +48,19 @@ public final class Gnuplot: CustomStringConvertible {
   }
   private static var running: Process?
 #endif
+
+  public func svg(width: Int = width, height: Int = height)-> String? {
+    do {
+      guard let data = try callAsFunction(.svg(width: width, height: heigth)) else { return nil }
+      let svg = data.dropFirst(270)
+      return #"<svg width="\#(width+25)" height="\#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
+      + String(decoding: svg, as: Unicode.UTF8.self)
+    } catch {
+      print(error)
+      return nil
+    }
+  }
+
 #if os(iOS)
   @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
     commands(terminal).data(using: .utf8)
@@ -131,7 +119,7 @@ public final class Gnuplot: CustomStringConvertible {
     let stdout = gnuplot.standardOutput as! Pipe
 #if os(Linux)
     let endOfData: Data
-    if case .svg(let path) = terminal, path.isEmpty {
+    if case .svg(_,_) = terminal {
       endOfData = "</svg>\n\n".data(using: .utf8)!
     } else if case .pdf(let path) = terminal, path.isEmpty {
       endOfData = Data([37, 37, 69, 79, 70, 10])  // %%EOF
@@ -445,7 +433,7 @@ public final class Gnuplot: CustomStringConvertible {
     }
   }
   public enum Terminal {
-    case svg(_ toFile: String)
+    case svg(width: Int, height: Int)
     case pdf(_ toFile: String)
     case png(_ toFile: String)
     case pngSmall(_ toFile: String)
@@ -457,8 +445,8 @@ public final class Gnuplot: CustomStringConvertible {
       let font = "enhanced font ',"
 #endif
       switch self {
-      case .svg(let path):
-        return ["term": "svg size \(width),\(height)", "output": path.isEmpty ? "" : "'\(path)'"]
+      case .svg(let w, let h):
+        return ["term": "svg size \(w),\(h)", "output": ""]
       case .pdf(let path):
         return [
           "term": "pdfcairo size 10,7.1 \(font)14'", "output": path.isEmpty ? "" : "'\(path)'",
