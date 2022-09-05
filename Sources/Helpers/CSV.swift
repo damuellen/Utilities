@@ -39,7 +39,7 @@ public struct CSVReader {
 
   public func peek(_ range: Array<Any>.Indices) -> String {
     if let headerRow = headerRow {
-      let minWidth = headerRow.map { $0.count }.max() ?? 1
+      let minWidth: Int = headerRow.map { $0.count }.max() ?? 1
       let formatted = Array.justified(dataRows[range], minWidth: minWidth)
       let width = (terminalWidth() / formatted.1 + 1) * formatted.1 + 1
       return String(
