@@ -30,12 +30,12 @@ public final class Gnuplot: CustomStringConvertible {
   public init(data: String, style: Style = .linePoints) {
     self.datablock = "\n$data <<EOD\n" + data + "\n\n\nEOD\n\n"
     self.defaultPlot = "plot $data"
-    self.settings = Gnuplot.settings(style)
+    self.settings = defaultSettings()
   }
   public init(plot: String, style: Style = .linePoints) {
     self.datablock = ""
     self.defaultPlot = plot
-    self.settings = Gnuplot.settings(style)
+    self.settings = defaultSettings()
   }
 #if os(Linux)
   deinit {
@@ -247,25 +247,6 @@ public final class Gnuplot: CustomStringConvertible {
     }
     return self
   }
-
-  private static func settings(_ style: Style) -> [String: String] {
-    var dict: [String: String] = [
-      "style line 18": "lt 1 lw 1 dashtype 3 lc rgb 'black'",
-      "style line 19": "lt 0 lw 0.5 lc rgb 'black'",
-      "label": "textcolor rgb 'black'",
-      "key": "above tc ls 18",
-    ]
-
-    let dark: [String] = ["1F78B4", "33A02C", "E31A1C", "FF7F00"]
-    let light: [String] = ["A6CEE3", "B2DF8A", "FB9A99", "FDBF6F"]
-    let pt = [4,6,8,10].shuffled()
-    pt.indices.forEach { i in
-      dict["style line \(i+11)"] = "lt 1 lw 1.5 pt \(pt[i]) ps 1.0 lc rgb '#\(dark[i])'"
-      dict["style line \(i+21)"] = "lt 1 lw 1.5 pt \(pt[i]+1) ps 1.0 lc rgb '#\(light[i])'"
-    }
-
-    return dict
-  }
   
   public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
   (y1s: Series, y2s: Series) where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
@@ -283,12 +264,12 @@ public final class Gnuplot: CustomStringConvertible {
       "key": "off", "xdata": "time", "timefmt": "'%s'", "format x": "'%k'",
       "xtics": "21600 ", "yrange": "0:1", "ytics": "0.25", "term": "pdfcairo size 7.1, 10",
     ]
-    self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
+    self.settings = defaultSettings().merging(setting) { _, new in new }
     let y = y1s.count
     self.defaultPlot = y1s.enumerated().map { i, y1 -> String in
       "\nset multiplot layout 8,4 rowsfirst\n"
       + (1...y1.count).map { c in
-        "plot $data i \(i) u ($0*300):\(c) axes x1y1 w l ls 30, $data i \(i+y) u ($0*300):\(c) axes x1y2 w l ls 31"
+        "plot $data i \(i) u ($0*300):\(c) axes x1y1 w l ls 31, $data i \(i+y) u ($0*300):\(c) axes x1y2 w l ls 32"
       }.joined(separator: "\n") + "\nunset multiplot"
     }.joined(separator: "\n")
   }
@@ -315,17 +296,17 @@ public final class Gnuplot: CustomStringConvertible {
       }
     }
     self.datablock = "\n$data <<EOD\n" + tables.joined(separator: "\n\n") + "\n\nEOD\n\n"
-    self.settings = Gnuplot.settings(style)
+    self.settings = defaultSettings()
     let (s, l) = style.raw
     var plot = "plot "
     plot += xys.enumerated()
       .map { i, t -> String in
         if (t.first?.count ?? 0) > 1 {
           return (2...t.first!.count).map { c -> String in
-            "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+9) title columnheader(1)"
+            "$data i \(i) u 1:\(c) \(s) w \(l) ls \(i+c+29) title columnheader(1)"
           }.joined(separator: ", \\\n")
         } else {
-          return "$data i \(i) u 0:1 \(s) w \(l) ls \(i+11) title columnheader(1)"
+          return "$data i \(i) u 0:1 \(s) w \(l) ls \(i+31) title columnheader(1)"
         }
       }
       .joined(separator: ", \\\n")
@@ -344,14 +325,14 @@ public final class Gnuplot: CustomStringConvertible {
     let missingTitles = xy1s.count + xy2s.count - titles.count
     var titles = titles
     if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
-    self.settings = Gnuplot.settings(style).merging(["ytics": "nomirror", "y2tics": ""]) {
+    self.settings = defaultSettings().merging(["ytics": "nomirror", "y2tics": ""]) {
       (_, new) in new
     }
-    let y1: String = zip(titles, xy1s).map { t, xys -> String in
-      t + "\n" + xys.map(\.row).joined()
+    let y1: String = zip(titles, xy1s).map { title, xys -> String in
+      title + "\n" + xys.map(\.row).joined()
     }.joined(separator: "\n\n")
-    let y2: String = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys -> String in
-      t + " ,\n" + xys.map(\.row).joined()
+    let y2: String = zip(titles.dropFirst(xy1s.count), xy2s).map { title, xys -> String in
+      title + " \n" + xys.map(\.row).joined()
     }.joined(separator: "\n\n")
     self.datablock =
     "\n$data <<EOD\n\(y1)" + (xy2s.isEmpty ? "" : "\n\n\(y2)") + "\n\n\nEOD\n\n"
@@ -361,10 +342,12 @@ public final class Gnuplot: CustomStringConvertible {
       .map { i, xy -> String in
         if (xy.first?.count ?? 0) > 1 {
           return (2...xy.first!.count).map { c -> String in
-            "$data i \(i) u 1:\(c) \(s) axes x1y1 w \(l) ls \(i+c+9) title columnheader(1)"
+            let ls = (xy2s.isEmpty ? 0 : 20) + i+c+9
+            return "$data i \(i) u 1:\(c) \(s) axes x1y1 w \(l) ls \(ls) title columnheader(1)"
           }.joined(separator: ", \\\n")
         } else {
-          return "$data i \(i) u 0:1 \(s) axes x1y1 w \(l) ls \(i+11) title columnheader(1)"
+          let ls = (xy2s.isEmpty ? 0 : 20) + i+11
+          return "$data i \(i) u 0:1 \(s) axes x1y1 w \(l) ls \(ls) title columnheader(1)"
         }
       }
       .joined(separator: ", \\\n") + ", \\\n"
@@ -423,13 +406,13 @@ public final class Gnuplot: CustomStringConvertible {
       setting["xtics rotate"] = ""
     }
 
-    self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
+    self.settings = defaultSettings().merging(setting) { _, new in new }
     var plot = "plot "
     plot += y1s.enumerated().map { i, ys -> String in
       "$data i \(i) u ($0*\(range.duration / Double(ys.count))+\(range.start.timeIntervalSince1970)):\(1) axes x1y1 w l ls \(i+11) title columnheader(1)"
     }.joined(separator: ", \\\n")
     if !y2s.isEmpty {
-      plot += ", \\\n" + y2s.enumerated().map { i, ys -> String  in
+      plot += ", \\\n" + y2s.enumerated().map { i, ys -> String in
         "$data i \(i + y1s.count) u ($0*\(range.duration / Double(ys.count))+\(range.start.timeIntervalSince1970)):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
       }.joined(separator: ", \\\n")
     }
@@ -501,6 +484,29 @@ public final class Gnuplot: CustomStringConvertible {
     "object rectangle from graph 0,0 to graph 1,1 behind fillcolor rgb '#EBEBEB' fillstyle solid noborder"
   ]
 }
+
+fileprivate func defaultSettings() -> [String: String] {
+  var dict: [String: String] = [
+    "style line 18": "lt 1 lw 1 dashtype 3 lc rgb 'black'",
+    "style line 19": "lt 0 lw 0.5 lc rgb 'black'",
+    "label": "textcolor rgb 'black'",
+    "key": "above tc ls 18",
+  ]
+
+  let dark: [String] = ["1F78B4", "33A02C", "E31A1C", "FF7F00"]
+  let light: [String] = ["A6CEE3", "B2DF8A", "FB9A99", "FDBF6F"]
+  let pt = [4,6,8,10].shuffled()
+  pt.indices.forEach { i in
+    dict["style line \(i+11)"] = "lt 1 lw 1.5 pt \(pt[i]) ps 1.0 lc rgb '#\(dark[i])'"
+    dict["style line \(i+21)"] = "lt 1 lw 1.5 pt \(pt[i]+1) ps 1.0 lc rgb '#\(light[i])'"
+  }
+  let mat = ["0072bd", "d95319", "edb120", "7e2f8e", "77ac30", "4dbeee", "a2142f"]
+  mat.indices.forEach { i in
+    dict["style line \(i+31)"] = "lt 1 lw 1.5 pt 7 ps 1.0 lc rgb '#\(mat[i])'"
+  }
+  return dict
+}
+
 #if os(Windows)
 public let height = 720
 public let width = 1255
