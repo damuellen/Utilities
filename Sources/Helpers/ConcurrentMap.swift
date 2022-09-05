@@ -24,9 +24,9 @@ extension RandomAccessCollection {
       uninitializedMemory, resultCount in resultCount = n
       let baseAddress = uninitializedMemory.baseAddress!
       DispatchQueue.concurrentPerform(iterations: batchCount) { b in
-        let startOffset = b * n / batchCount
-        let endOffset = (b + 1) * n / batchCount
-        var sourceIndex = index(self.startIndex, offsetBy: startOffset)
+        let startOffset: Int = b * n / batchCount
+        let endOffset: Int = (b + 1) * n / batchCount
+        var sourceIndex: Index = index(self.startIndex, offsetBy: startOffset)
         for p in baseAddress + startOffset..<baseAddress + endOffset {
           p.initialize(to: transform(self[sourceIndex]))
           formIndex(after: &sourceIndex)

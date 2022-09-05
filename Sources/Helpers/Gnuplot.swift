@@ -52,7 +52,7 @@ public final class Gnuplot: CustomStringConvertible {
   public func svg(width: Int = width, height: Int = height)-> String? {
     do {
       guard let data = try callAsFunction(.svg(width: width, height: height)) else { return nil }
-      let svg = data.dropFirst(270)
+      let svg: Data = data.dropFirst(270)
       return #"<svg width="\#(width+25)" height="\#(height)" viewBox="0 0 \#(width+25) \#(height)" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
       + String(decoding: svg, as: Unicode.UTF8.self)
     } catch {
@@ -269,12 +269,16 @@ public final class Gnuplot: CustomStringConvertible {
   
   public init<Scalar: FloatingPoint, Vector: RandomAccessCollection, Tensor: RandomAccessCollection, Series: Collection>
   (y1s: Series, y2s: Series) where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
-    self.datablock =
-    "\n$data <<EOD\n"
-    + y1s.map { tensor -> String in tensor.transposed().map(\.vector).joined(separator: "\n") }.joined(separator: "\n\n\n")
-    + "\n\n\n"
-    + y2s.map { tensor -> String in tensor.transposed().map(\.vector).joined(separator: "\n") }.joined(separator: "\n\n\n")
-    + "\n\n\nEOD\n\n"
+    var tables = [String]()
+    for y1 in y1s {
+      let table: String = y1.transposed().map(\.row).joined()
+      tables.append("-\n" + table)
+    }
+    for y2 in y2s {
+      let table: String = y2.transposed().map(\.row).joined()
+      tables.append("-\n" + table)
+    }
+    self.datablock = "\n$data <<EOD\n" + tables.joined(separator: "\n\n") + "\n\n\nEOD\n\n"
     let setting = [
       "key": "off", "xdata": "time", "timefmt": "'%s'", "format x": "'%k'",
       "xtics": "21600 ", "yrange": "0:1", "ytics": "0.25", "term": "pdfcairo size 7.1, 10",
@@ -292,25 +296,29 @@ public final class Gnuplot: CustomStringConvertible {
   public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
   (xys: Series, xylabels: [[String]] = [], titles: [String] = [], style: Style = .linePoints)
   where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
-    let missingTitles = xys.count - titles.count
-    var titles = titles
-    if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
-
-    let table: [String] = xys.enumerated().map { i, t -> String in
+    var headers = titles.makeIterator()
+    var tables = [String]()
+    for (i, xy) in xys.enumerated() {
+      let table: String
       if xylabels.endIndex > i {
-        return titles[i] + "\n" + zip(t, xylabels[i]).map { xy, label -> String in xy.vector + label }.joined(separator: "\n")
+        table = zip(xy, xylabels[i]).map { xy, label -> String in
+          let vector: String = xy.map(String.init).joined(separator: " ")
+          return vector + " " + label + "\n"
+        }.joined()
       } else {
-        return titles[i] + "\n" + t.map { xy in xy.vector }.joined(separator: "\n")
+        table = xy.map(\.row).joined()
+      }
+      if let title = headers.next() {
+        tables.append(title + "\n" + table)
+      } else {
+        tables.append("-\n" + table)
       }
     }
-
-    self.datablock = "\n$data <<EOD\n" + table.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
+    self.datablock = "\n$data <<EOD\n" + tables.joined(separator: "\n\n") + "\n\nEOD\n\n"
     self.settings = Gnuplot.settings(style)
     let (s, l) = style.raw
-    
-    self.defaultPlot =
-    "plot "
-    + xys.enumerated()
+    var plot = "plot "
+    plot += xys.enumerated()
       .map { i, t -> String in
         if (t.first?.count ?? 0) > 1 {
           return (2...t.first!.count).map { c -> String in
@@ -321,12 +329,13 @@ public final class Gnuplot: CustomStringConvertible {
         }
       }
       .joined(separator: ", \\\n")
-    + (xylabels.isEmpty
+    plot += (xylabels.isEmpty
        ? ""
        : ", \\\n"
        + xylabels.indices.map { i -> String in
       "$data i \(i) u 1:2:3 with labels tc ls 18 offset char 0,1 notitle"
     }.joined(separator: ", \\\n"))
+    self.defaultPlot = plot
   }
 
   public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
@@ -338,15 +347,17 @@ public final class Gnuplot: CustomStringConvertible {
     self.settings = Gnuplot.settings(style).merging(["ytics": "nomirror", "y2tics": ""]) {
       (_, new) in new
     }
-    let y1: [String] = zip(titles, xy1s).map { t, xys -> String in t + "\n" + xys.map { xy in xy.vector }.joined(separator: "\n") }
-    let y2: [String] = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys -> String in t + " ,\n" + xys.map { xy in xy.vector }.joined(separator: "\n") }
+    let y1: String = zip(titles, xy1s).map { t, xys -> String in
+      t + "\n" + xys.map(\.row).joined()
+    }.joined(separator: "\n\n")
+    let y2: String = zip(titles.dropFirst(xy1s.count), xy2s).map { t, xys -> String in
+      t + " ,\n" + xys.map(\.row).joined()
+    }.joined(separator: "\n\n")
     self.datablock =
-    "\n$data <<EOD\n" + y1.joined(separator: "\n\n\n") + (xy2s.isEmpty ? "" : "\n\n\n")
-    + y2.joined(separator: "\n\n\n") + "\n\n\nEOD\n\n"
+    "\n$data <<EOD\n\(y1)" + (xy2s.isEmpty ? "" : "\n\n\(y2)") + "\n\n\nEOD\n\n"
     let (s, l) = style.raw
-    self.defaultPlot =
-    "plot "
-    + xy1s.enumerated()
+    var plot = "plot "
+    plot += xy1s.enumerated()
       .map { i, xy -> String in
         if (xy.first?.count ?? 0) > 1 {
           return (2...xy.first!.count).map { c -> String in
@@ -357,7 +368,7 @@ public final class Gnuplot: CustomStringConvertible {
         }
       }
       .joined(separator: ", \\\n") + ", \\\n"
-    + xy2s.enumerated()
+    plot += xy2s.enumerated()
       .map { i, xy -> String in
         if (xy.first?.count ?? 0) > 1 {
           return (2...xy.first!.count).map { c -> String in
@@ -368,23 +379,32 @@ public final class Gnuplot: CustomStringConvertible {
         }
       }
       .joined(separator: ", \\\n")
+    self.defaultPlot = plot
   }
 
   @available(macOS 10.12, *)
   public init<Scalar: FloatingPoint, Vector: Collection, Tensor: Collection, Series: Collection>
   (y1s: Series, y2s: Series, titles: [String] = [], range: DateInterval)
   where Tensor.Element == Vector, Vector.Element == Scalar, Series.Element == Tensor, Scalar: LosslessStringConvertible {
-    let missingTitles = y1s.count + y2s.count - titles.count
-    var titles = titles
-    if missingTitles > 0 { titles.append(contentsOf: repeatElement("-", count: missingTitles)) }
-    titles = titles.map { $0 + "\n" }
-    var header = titles.makeIterator()
-    self.datablock =
-    "\n$data <<EOD\n"
-    + y1s.map { header.next()! + $0.map(\.vector).joined(separator: "\n") }.joined(separator: "\n\n\n")
-    + "\n\n\n"
-    + y2s.map { header.next()! + $0.map(\.vector).joined(separator: "\n") }.joined(separator: "\n\n\n")
-    + "\n\n\nEOD\n\n"
+    var headers = titles.makeIterator()
+    var tables = [String]()
+    for y1 in y1s {
+      let table: String = y1.map(\.row).joined()
+      if let title = headers.next() {
+        tables.append(title + "\n" + table)
+      } else {
+        tables.append("-\n" + table)
+      }
+    }
+    for y2 in y2s {
+      let table: String = y2.map(\.row).joined()
+      if let title = headers.next() {
+        tables.append(title + "\n" + table)
+      } else {
+        tables.append("-\n" + table)
+      }
+    }
+    self.datablock = "\n$data <<EOD\n" + tables.joined(separator: "\n\n") + "\n\nEOD\n\n"
     var setting: [String: String] = [
       "xdata": "time", "timefmt": "'%s'",
       "xrange": "[\(range.start.timeIntervalSince1970):\(range.end.timeIntervalSince1970)]"
@@ -404,11 +424,16 @@ public final class Gnuplot: CustomStringConvertible {
     }
 
     self.settings = Gnuplot.settings(.lines(smooth: false)).merging(setting) { _, new in new }
-    self.defaultPlot = "plot " + y1s.enumerated().map { i, ys -> String in
+    var plot = "plot "
+    plot += y1s.enumerated().map { i, ys -> String in
       "$data i \(i) u ($0*\(range.duration / Double(ys.count))+\(range.start.timeIntervalSince1970)):\(1) axes x1y1 w l ls \(i+11) title columnheader(1)"
-    }.joined(separator: ", \\\n") + (y2s.isEmpty ? "" : ", \\\n" + y2s.enumerated().map { i, ys -> String  in
-      "$data i \(i + y1s.count) u ($0*\(range.duration / Double(ys.count))+\(range.start.timeIntervalSince1970)):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
-    }.joined(separator: ", \\\n"))
+    }.joined(separator: ", \\\n")
+    if !y2s.isEmpty {
+      plot += ", \\\n" + y2s.enumerated().map { i, ys -> String  in
+        "$data i \(i + y1s.count) u ($0*\(range.duration / Double(ys.count))+\(range.start.timeIntervalSince1970)):\(1) axes x1y2 w l ls \(i+21) title columnheader(1)"
+      }.joined(separator: ", \\\n")
+    }
+    self.defaultPlot = plot
   }
 
   public enum Style {
@@ -494,5 +519,5 @@ extension Dictionary where Key == String, Value == String {
   var concatenated: String { self.map { "set " + $0.key + " " + $0.value + "\n" }.joined() }
 }
 extension Collection where Element: FloatingPoint, Element: LosslessStringConvertible {
-  var vector: String { self.lazy.map(String.init).joined(separator: " ") }
+  var row: String { self.lazy.map(String.init).joined(separator: " ") + "\n" }
 }

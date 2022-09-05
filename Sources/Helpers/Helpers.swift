@@ -29,7 +29,7 @@ public func terminalWidth() -> Int {
     cachedTerminalWidth = 80
   #else
     // First try to get from environment.
-    if let columns = ProcessInfo.processInfo.environment["COLUMNS"], let width = Int(columns) {
+  if let columns: String = ProcessInfo.processInfo.environment["COLUMNS"], let width = Int(columns) {
       cachedTerminalWidth = width
     } else {
       var ws = winsize()
@@ -77,7 +77,7 @@ public func start(_ command: String) {
 extension Date: ExpressibleByStringLiteral {
   public init(stringLiteral: String) { self.init(Substring(stringLiteral)) }
   public init(_ dateString: Substring) {
-    let values = dateString.split(
+    let values: [Int32] = dateString.split(
       maxSplits: 6, 
       omittingEmptySubsequences: true, 
       whereSeparator: {!$0.isWholeNumber}
@@ -100,7 +100,7 @@ extension Date: ExpressibleByStringLiteral {
     if values.count > 5 {
       info.tm_sec = values[5]
     }
-    let time = mktime(&info)
+    let time: time_t = mktime(&info)
     self.init(timeIntervalSince1970: TimeInterval(time))
   }
 }
@@ -144,13 +144,13 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
   goal: Double, _ range: ClosedRange<Double> = 0...1, tolerance: Double = 0.0001,
   maxIterations: Int = 100, _ f: (Double) -> Double
 ) -> Double {
-  var a = range.lowerBound
-  var b = range.upperBound
+  var a: Double = range.lowerBound
+  var b: Double = range.upperBound
   for _ in 0..<maxIterations {
-    let c = (a + b) / 2
-    let fc = f(c)
-    let fa = f(a)
-    if fc == goal || (b - a) / 2 < tolerance { return c }
+    let c: Double = (a + b) / 2.0
+    let fc: Double = f(c)
+    let fa: Double = f(a)
+    if fc == goal || (b - a) / 2.0 < tolerance { return c }
     if (fc < goal && fa < goal) || (fc > goal && fa > goal) { a = c } else { b = c }
   }
   return Double.nan
@@ -160,8 +160,8 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
   goal: Double, _ range: ClosedRange<Double> = 0...1, tolerance: Double = 0.0001,
   maxIterations: Int = 100, _ f: (Double) -> Double
 ) -> Double {
-  var x = [range.lowerBound, 0.0, range.upperBound]
-  var y = [0.0, 0.0]
+  var x: [Double] = [range.lowerBound, 0.0, range.upperBound]
+  var y: [Double] = [0.0, 0.0]
   for _ in 0..<maxIterations {
     x[1] = (x[0] + x[2]) / 2
     DispatchQueue.concurrentPerform(iterations: 2) { i in y[i] = f(x[i]) }
@@ -290,9 +290,11 @@ extension Comparable {
 /// - Returns: The middle value, or the arithmetic mean of two middle values.
 @_alwaysEmitIntoClient public func median<T: FloatingPoint>(_ x: T, _ y: T, _ rest: T...) -> T {
   func _mean(_ a: T, _ b: T) -> T {
-    (a.sign == b.sign)  // Avoid overflowing to infinity, by choosing to
-      ? a + ((b - a) / 2)  // ? either advance by half the distance,
-      : (a + b) / 2  // : or use the sum divided by the count.
+    if (a.sign == b.sign) { // Avoid overflowing to infinity, by choosing to
+      return a + ((b - a) / 2)  // ? either advance by half the distance,
+    } else {
+      return (a + b) / 2  // : or use the sum divided by the count.
+    }
   }
   guard !rest.isEmpty else { return _mean(x, y) }
 

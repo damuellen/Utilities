@@ -51,11 +51,10 @@ public struct HTML: CustomStringConvertible {
     } else {
       self.bodyContent = [lazySVG, coffeeSVG, sleepSVG].randomElement()!
     }
-    self.meta =
-      "<meta charset=\"utf-8\">\n"
-      + ((refresh > 0)
-        ? """
-        <meta http-equiv=\"refresh\" content=\"\(refresh)\">
+    let cs = "<meta charset=\"utf-8\">\n"
+    if refresh > 0 {
+      self.meta = """
+        \(cs)<meta http-equiv=\"refresh\" content=\"\(refresh)\">
         <style type="text/css">
            @keyframes move {
             0%   { opacity:0; transform: translateY(-100%); }
@@ -69,7 +68,10 @@ public struct HTML: CustomStringConvertible {
             animation: move \(refresh)s;
         }
         </style>
-        """ : "")
+        """
+    } else {
+      self.meta = cs
+    }
   }
 
   public mutating func add(body: String) {

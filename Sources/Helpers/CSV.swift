@@ -170,7 +170,7 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
   let power = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17]
   let base = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
   var a = [Double]()
-  var p = base
+  var p: UnsafePointer<UInt8> = base
   var distance = [0]
   for (n, p) in buffer.enumerated() { if p == separator { distance.append(n+1) } }
   for (n, d) in distance.enumerated() {
@@ -224,7 +224,9 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
 private func parseDate(_ buffer: UnsafeRawBufferPointer, separator: UInt8, at: Int) -> Double {
   let dateString = buffer.split(separator: separator, maxSplits: at + 1, omittingEmptySubsequences: false)[at]
   let date = dateString.split(maxSplits: 6, omittingEmptySubsequences: false, whereSeparator: { $0 < UInt8(ascii: "0") || $0 > UInt8(ascii: "9")})
-  let values = date.prefix(6).map { $0.map { Int32($0) - 48 }.reduce(into: 0, { $0 = $0 * 10 + $1 }) }
+  let values = date.prefix(6).map { c -> Int32 in
+    c.map { Int32($0) - 48 }.reduce(into: 0, { $0 = $0 * 10 + $1 })
+  }
   var t = time_t()
   time(&t)
   #if os(Windows)
