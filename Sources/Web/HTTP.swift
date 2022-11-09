@@ -529,3 +529,67 @@ enum InternalServerError: Error {
   case requestTooShort
   case badBody
 }
+
+#if os(Linux)
+  import CZLib
+
+  extension Data {
+    /// Whether the receiver is compressed in gzip format.
+    public var isGzipped: Bool { self.starts(with: [0x1f, 0x8b]) }
+    /// Create a new `Data` instance by compressing the receiver using zlib.
+    /// Throws an error if compression failed.
+    ///
+    /// - Parameter level: Compression level.
+    /// - Returns: Gzip-compressed `Data` instance.
+    /// - Throws: `GzipError`
+    public func gzipped(level: CompressionLevel = .defaultCompression) -> Data {
+      guard !self.isEmpty else { return Data() }
+      var stream = z_stream()
+      var status: Int32
+      status = deflateInit2_(
+        &stream, level.rawValue, Z_DEFLATED, MAX_WBITS + 16, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY,
+        ZLIB_VERSION, Int32(DataSize.stream))
+      guard status == Z_OK else { return self }
+      var data = Data(capacity: DataSize.chunk)
+      repeat {
+        if Int(stream.total_out) >= data.count { data.count += DataSize.chunk }
+        let inputCount = self.count
+        let outputCount = data.count
+        self.withUnsafeBytes { (inputPointer: UnsafeRawBufferPointer) in
+          stream.next_in = UnsafeMutablePointer<Bytef>(
+            mutating: inputPointer.bindMemory(to: Bytef.self).baseAddress!
+          ).advanced(by: Int(stream.total_in))
+          stream.avail_in = uint(inputCount) - uInt(stream.total_in)
+          data.withUnsafeMutableBytes { (outputPointer: UnsafeMutableRawBufferPointer) in
+            stream.next_out = outputPointer.bindMemory(to: Bytef.self).baseAddress!.advanced(
+              by: Int(stream.total_out))
+            stream.avail_out = uInt(outputCount) - uInt(stream.total_out)
+            status = deflate(&stream, Z_FINISH)
+            stream.next_out = nil
+          }
+          stream.next_in = nil
+        }
+      } while stream.avail_out == 0
+      guard deflateEnd(&stream) == Z_OK, status == Z_STREAM_END else { return self }
+      data.count = Int(stream.total_out)
+      return data
+    }
+  }
+
+  private enum DataSize {
+    static let chunk = 1 << 14
+    static let stream = MemoryLayout<z_stream>.size
+  }
+
+  /// Compression level whose rawValue is based on the zlib's constants.
+  public struct CompressionLevel: RawRepresentable {
+    /// Compression level in the range of `0` (no compression) to `9` (maximum compression).
+    public let rawValue: Int32
+    public static let noCompression = CompressionLevel(Z_NO_COMPRESSION)
+    public static let bestSpeed = CompressionLevel(Z_BEST_SPEED)
+    public static let bestCompression = CompressionLevel(Z_BEST_COMPRESSION)
+    public static let defaultCompression = CompressionLevel(Z_DEFAULT_COMPRESSION)
+    public init(rawValue: Int32) { self.rawValue = rawValue }
+    public init(_ rawValue: Int32) { self.rawValue = rawValue }
+  }
+#endif
