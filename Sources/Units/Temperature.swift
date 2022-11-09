@@ -9,6 +9,7 @@
 //
 
 import Libc
+import Helpers
 
 public struct Temperatures {
   public var cold: Temperature
@@ -163,5 +164,11 @@ extension Temperature: Comparable {
 
   public static func == (lhs: Temperature, rhs: Temperature) -> Bool {
     return abs(lhs.kelvin - rhs.kelvin) < 1e-4
+  }
+}
+
+extension Polynomial {
+  public func callAsFunction(_ temperature: Temperature) -> Double {
+    evaluated(temperature.kelvin)
   }
 }

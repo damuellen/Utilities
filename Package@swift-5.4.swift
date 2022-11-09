@@ -8,8 +8,10 @@ let package = Package(
   targets: [
     .target(name: "Libc"),
     .target(name: "CZLib"),
-    .target(name: "Physics", dependencies: ["Helpers"]),
-    .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
+    .target(name: "Units", dependencies: ["Helpers"]),
+    .target(name: "Web", dependencies: ["Helpers"]),
+    .target(name: "XML"),
+    .target(name: "Utilities", dependencies: ["Helpers", "Units"]),
     .target(name: "Helpers", dependencies: [
       "Libc", "CZLib",])
   ]
@@ -20,8 +22,10 @@ let package = Package(
   products: [.library(name: "Utilities", targets: ["Utilities"])],
   targets: [
     .target(name: "Libc"),
-    .target(name: "Physics", dependencies: ["Helpers"]),
-    .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
+    .target(name: "Units", dependencies: ["Helpers"]),
+    .target(name: "Web", dependencies: ["Helpers"]),
+    .target(name: "XML"),
+    .target(name: "Utilities", dependencies: ["Helpers", "Units"]),
     .target(name: "Helpers", dependencies: ["Libc"])
   ]
 )

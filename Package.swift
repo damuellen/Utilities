@@ -7,8 +7,10 @@ let package = Package(
   targets: [
     .target(name: "Libc"), 
     .target(name: "CZLib"),
-    .target(name: "Physics", dependencies: ["Helpers"]),
-    .target(name: "Utilities", dependencies: ["Helpers", "Physics"]),
+    .target(name: "Units", dependencies: ["Libc"]),
+    .target(name: "Web", dependencies: ["Helpers"]),
+    .target(name: "XML"),
+    .target(name: "Utilities", dependencies: ["Helpers", "Units"]),
     .target(name: "Helpers", dependencies: ["Libc", "CZLib"], exclude: ["GnuplotInit.swift"])
   ]
 )

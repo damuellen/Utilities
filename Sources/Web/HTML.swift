@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import Helpers
 
 #if os(Windows)
   import WinSDK
