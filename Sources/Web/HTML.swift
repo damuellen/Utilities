@@ -98,7 +98,11 @@ public struct HTML: CustomStringConvertible {
   
   private let style: String = """
     <style media="print">
-      button { display: none; }
+      @media print and (width: 21cm) and (height: 29.7cm) {
+        @page {
+          margin: 1cm;
+        }
+      }
     </style>
     <style media="screen">
       svg {
