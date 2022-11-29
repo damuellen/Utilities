@@ -113,7 +113,8 @@ public struct HTML: CustomStringConvertible {
         height: 95vh;
         width: 98%;
         font-family: sans-serif;
-        font-size: 16px;
+        font-size: 17px;
+        user-select: none;
       }
       tspan { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
       body { background-color: rgb(247,247,247); }
