@@ -47,11 +47,17 @@ public struct HTML: CustomStringConvertible {
 
   /// Creates an HTML document with the given body.
   public init(body: String? = nil, refresh: Int = 0) {
+    let cancel: String = """
+      <a href="/cancel">
+      <button style="position: fixed; right: 8px; top: 8px; z-index: 1;">Cancel</button>
+      </a>
+      """
     if let content = body {
-      self.bodyContent = content
+      self.bodyContent = content + (refresh > 0 ? cancel : "")
     } else {
       self.bodyContent = [lazySVG, coffeeSVG, sleepSVG].randomElement()!
     }
+
     let cs = "<meta charset=\"utf-8\">\n"
     if refresh > 0 {
       self.meta = """
@@ -92,10 +98,6 @@ public struct HTML: CustomStringConvertible {
   
   private let style: String = """
     <style media="print">
-      svg { 
-        font-family: sans-serif; font-size: 16px; 
-        max-width: 28.0cm; max-height: 17.5cm; margin: -0.2cm;
-      }
       button { display: none; }
     </style>
     <style media="screen">
@@ -129,16 +131,20 @@ public struct HTML: CustomStringConvertible {
     <script>new JSONEditor(document.getElementById("jsoneditor"), {},
     """
 
+  private let toggle: String = """
+    <script type="text/javascript">
+    function toggle() {
+    const e = document.getElementsByClassName("c")[0];
+    e.style.display = ((e.style.display!='none') ? 'none' : 'block');
+    }</script>
+    """
+
   private var raw: String {
-    let head: String = "<html lang=\"en\"><head>" + meta + style + "<link rel=\"icon\" href=\"data:,\"></head>\n<body>\n"
+    let head: String = "<html lang=\"en\"><head>" + meta + style + "<link rel=\"icon\" href=\"data:,\"></head>\n<body onclick=\"toggle()\">\n"
     let tail: String = "</body>\n</html>\n"
-    let full: String =
-      "<button onclick=\"window.stop(); document.documentElement.requestFullscreen();\" style=\"position: fixed; left: 8px; top: 8px; z-index: 1;\">Fullscreen</button>\n"
-    let cancel: String =
-      "<a href=\"/cancel\"><button style=\"position: fixed; right: 8px; top: 8px; z-index: 1;\">Cancel</button></a>\n"
     if let json = json {
-      return type + head + cancel + full + bodyContent + script + json + ")</script>" + tail
+      return type + head + toggle + bodyContent + script + json + ")</script>" + tail
     }
-    return type + head + cancel + full + bodyContent + tail
+    return type + head + toggle + bodyContent + tail
   }
 }
