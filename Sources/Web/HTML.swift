@@ -112,7 +112,7 @@ public struct HTML: CustomStringConvertible {
         font-size: 16px;
       }
       tspan { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-      body { background-color: rgb(247,247,247); overflow: hidden; }
+      body { background-color: rgb(247,247,247); }
       @media (prefers-color-scheme: dark) {
         svg { filter: drop-shadow(3px 3px 3px rgb(255, 255, 255)); }
         body {
@@ -132,6 +132,9 @@ public struct HTML: CustomStringConvertible {
     """
 
   private let toggle: String = """
+    <style media="screen">
+    body { overflow: hidden; }
+    </style>
     <script type="text/javascript">
     function toggle() {
     const e = document.getElementsByClassName("c")[0];
@@ -143,7 +146,7 @@ public struct HTML: CustomStringConvertible {
     let head: String = "<html lang=\"en\"><head>" + meta + style + "<link rel=\"icon\" href=\"data:,\"></head>\n<body onclick=\"toggle()\">\n"
     let tail: String = "</body>\n</html>\n"
     if let json = json {
-      return type + head + toggle + bodyContent + script + json + ")</script>" + tail
+      return type + head + bodyContent + script + json + ")</script>" + tail
     }
     return type + head + toggle + bodyContent + tail
   }
