@@ -66,7 +66,7 @@ public func start(_ command: String) {
 
     static public func temporaryFile() -> URL {
       let fm = FileManager.default
-      let id = String(UUID().uuidString.prefix(8))
+      let id = String(Int(Date().timeIntervalSince1970), radix: 36, uppercase: true).suffix(5)
       return fm.temporaryDirectory.appendingPathComponent(id)
     }
 
