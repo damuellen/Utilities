@@ -66,8 +66,8 @@ public func start(_ command: String) {
 
     static public func temporaryFile() -> URL {
       let fm = FileManager.default
-      let id = String(Int(Date().timeIntervalSince1970), radix: 36, uppercase: true).suffix(5)
-      return fm.temporaryDirectory.appendingPathComponent(id)
+      let id = String(Int(Date().timeIntervalSince1970), radix: 36, uppercase: true)
+      return fm.temporaryDirectory.appendingPathComponent(String(id.suffix(5)))
     }
 
     public func removeItem() throws { try FileManager.default.removeItem(at: self) }
