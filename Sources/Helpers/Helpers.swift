@@ -198,18 +198,18 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
 }
 
 extension ClosedRange where Bound == Double {
-  @inlinable public static func / (range: ClosedRange<Double>, _ count: Int) -> (interval: Double, numbers: [Double]) {
+  @inlinable public static func / (range: ClosedRange<Double>, _ count: Int) -> (interval: Double, iteration: [Double]) {
     let interval = (range.upperBound - range.lowerBound) / Double(count)
-    let numbers = Array(stride(from: range.lowerBound, through: range.upperBound, by: interval))
-    return (interval, numbers)
+    let iteration = Array(stride(from: range.lowerBound, through: range.upperBound, by: interval))
+    return (interval, iteration)
   }
 }
 
 extension Range where Bound == Double {
-  @inlinable public static func / (range: Range<Double>, _ count: Int) -> (interval: Double, numbers: [Double]) {
+  @inlinable public static func / (range: Range<Double>, _ count: Int) -> (interval: Double, iteration: [Double]) {
     let interval = (range.upperBound - range.lowerBound) / Double(count)
-    let numbers = Array(stride(from: range.lowerBound, to: range.upperBound, by: interval))
-    return (interval, numbers)
+    let iteration = Array(stride(from: range.lowerBound, to: range.upperBound, by: interval))
+    return (interval, iteration)
   }
 }
 
