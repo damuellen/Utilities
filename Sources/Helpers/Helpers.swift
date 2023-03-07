@@ -312,3 +312,20 @@ extension Comparable {
     return values[index]
   }
 }
+
+extension Array where Element == Double {
+  @_alwaysEmitIntoClient public func interpolate(steps: Int) -> [Double] {
+    guard count > 1 else { return self }
+    return Array(unsafeUninitializedCapacity: self.count + (self.count - 1) * steps, initializingWith: { (array, count) in
+      count = self.count + (self.count - 1) * steps
+      let increment = stride(from: 0, to: count, by: steps + 1)
+      for (a,b) in zip(increment, indices) { array[a] = self[b] }
+      for (x,y) in zip(increment.dropLast(), increment.dropFirst()) {
+        for i in x+1..<y {
+          let lerp = Double(i-x) / Double(y-x)
+          array[i] = array[x] + (lerp * (array[y] - array[x]))
+        } 
+      }
+    })
+  }
+}
