@@ -16,7 +16,7 @@ public struct CSVReader {
   public let headerRow: [String]?
   public let dataRows: [[Double]]
 
-  private let parseDates: Int?
+  private let dateColumn: Int?
 
   public var csv: String { peek(dataRows.indices) }
 
@@ -30,8 +30,8 @@ public struct CSVReader {
   }
 
   public var dates: [Date] {
-    if let parseDates = parseDates {
-      return dataRows.indices.map { Date(timeIntervalSince1970: dataRows[$0][parseDates]) }
+    if let dateColumn = dateColumn {
+      return dataRows.indices.map { Date(timeIntervalSince1970: dataRows[$0][dateColumn]) }
     } else {
       return []
     }    
@@ -72,14 +72,14 @@ public struct CSVReader {
     }
   }
 
-  public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String..., parseDates: Int? = nil) {
+  public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String..., dateColumn: Int? = nil) {
     let url = URL(fileURLWithPath: atPath)
     guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
-    self.init(data: data, separator: separator, filter: filter, skip: skip, parseDates: parseDates)
+    self.init(data: data, separator: separator, filter: filter, skip: skip, dateColumn: dateColumn)
   }
 
-  public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = [], parseDates: Int? = nil) {
+  public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = [], dateColumn: Int? = nil) {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
     let separator = UInt8(ascii: separator)
@@ -108,24 +108,23 @@ public struct CSVReader {
         skip.reduce(false) { headers[i].elementsEqual($1) } ||
         filter.reduce(false) { !headers[i].contains($1) }
       }
-      excluded.reversed().forEach({ if $0 != parseDates { unique.remove(at: $0) } })
+      excluded.reversed().forEach({ if $0 != dateColumn { unique.remove(at: $0) } })
       self.headerRow = unique      
     } else {
       excluded = skip.compactMap { Int($0) }
       self.headerRow = nil
     }
-    self.parseDates = parseDates
-    if let parseDates = parseDates {
-      excluded.append(parseDates)
+    self.dateColumn = dateColumn
+    if let dateColumn = dateColumn {
+      excluded.append(dateColumn)
       self.dataRows = data[start...].withUnsafeBytes { content in
         let lines = content.split(separator: newLine)
         return lines.map { line in
           let line = hasCR ? line.dropLast() : line
           let buffer = UnsafeRawBufferPointer(rebasing: line)
-          let date = parseDate(buffer, separator: separator, at: parseDates)
-          var row = parse(buffer, separator: separator, exclude: excluded)
-          row.insert(date, at: min(parseDates, row.endIndex))
-          return row
+          let date = parseDate(buffer, separator: separator, at: dateColumn)
+          let row = parse(buffer, separator: separator, exclude: excluded)
+          return [date] + row
         }
       }      
     } else {
