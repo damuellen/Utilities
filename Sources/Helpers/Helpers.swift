@@ -100,17 +100,6 @@ public func start(_ command: String) {
   #endif
 }
 #if os(Windows) || os(Linux)
-  extension FileManager {
-    static func transientDirectory(url: (URL) throws -> Void) throws {
-      let fm = FileManager.default
-      let id = String(UUID().uuidString.prefix(8))
-      let directory = fm.temporaryDirectory.appendingPathComponent(id, isDirectory: true)
-      try fm.createDirectory(at: directory, withIntermediateDirectories: false)
-      try url(directory)
-      try fm.removeItem(at: directory)
-    }
-  }
-
   extension URL {
     var windowsPath: String { path.replacingOccurrences(of: "/", with: "\\") }
 
