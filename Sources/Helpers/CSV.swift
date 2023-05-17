@@ -40,13 +40,13 @@ public struct CSVReader {
   public func peek(_ range: Array<Any>.Indices) -> String {
     if let headerRow = headerRow {
       let minWidth: Int = headerRow.map { $0.count }.max() ?? 1
-      let formatted = Array.justified(dataRows[range], minWidth: minWidth)
+      let formatted = Array.tabulated(dataRows[range], minWidth: minWidth)
       let width = (terminalWidth() / formatted.1 + 1) * formatted.1 + 1
       return String(
         headerRow.map { $0.leftpad(formatted.1) }
           .joined(separator: " ").prefix(width)) + "\n" + formatted.0
     }
-    return Array.justified(dataRows[range]).0
+    return Array.tabulated(dataRows[range]).0
   }
 
   public subscript(row: Int) -> [Double] {
@@ -138,31 +138,6 @@ public struct CSVReader {
       }
     }
   }  
-}
-
-extension Array where Element == Double {
-  public var formatted: String {
-    self.map { $0.description }.joined(separator: ", ")
-  }
-}
-
-extension Array where Element == Double {
-  public static func justified(_ array: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
-    let m = Int(array.map { $0.largest }.reduce(Double(minWidth), { Swift.max($0, $1) }))
-      .description.count
-    let width = (terminalWidth() / minWidth + 1) * minWidth + 1
-    return (
-      array.map { row in
-        String(
-          row.map { String(format: "%.1f", $0).leftpad(m + 2) }.joined(separator: " ")
-            .prefix(width))
-      }.joined(separator: "\n"), m + 2
-    )
-  }
-}
-
-extension Array where Element == Double {
-  var largest: Double { self.map { $0.magnitude }.max() ?? 0 }
 }
 
 private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: [Int]) -> [Double] {
