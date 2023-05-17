@@ -50,9 +50,7 @@ extension Array where Element == Double {
       zip(0..., row).map { String(format: "%.1f", $0.1).leftpad(m + 2).colored(colors[$0.0 % 7]) }.joined(separator: " ")
     }.joined(separator: "\n"), m + 2)
   }
-}
 
-extension Array where Element == Double {
   var largest: Double { self.map { $0.magnitude }.max() ?? 0 }
 }
 
