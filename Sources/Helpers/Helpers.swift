@@ -40,6 +40,58 @@ public func terminalWidth() -> Int {
   return cachedTerminalWidth
 }
 
+extension Array where Element == Double {
+  public static func tabulated(_ table: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
+    let m = Int(table.map { $0.largest }.reduce(Double(minWidth), { Swift.max($0, $1) }))
+      .description.count
+    let width = (terminalWidth() / minWidth + 1) * minWidth + 1
+    let colors = (31...37).compactMap(ANSIColor.init)
+    return (table.map { row in
+      zip(0..., row).map { String(format: "%.1f", $0.1).leftpad(m + 2).colored(colors[$0.0 % 7]) }.joined(separator: " ")
+    }.joined(separator: "\n"), m + 2)
+  }
+}
+
+extension Array where Element == Double {
+  var largest: Double { self.map { $0.magnitude }.max() ?? 0 }
+}
+
+extension String {
+  func escape(_ sequence: ANSI) -> String {
+    #if os(Windows)
+    return self
+    #else
+    return "\(sequence.raw)\(self)\(ANSI.style(.reset).raw)"
+    #endif
+  }
+  public func styled(_ style: ANSIStyle) -> String { escape(.style(style)) }
+  public func colored(_ color: ANSIColor = .init(rawValue: Int.random(in: 31...37))!) -> String { escape(.text(color: color)) }
+  public func background(_ color: ANSIColor) -> String { escape(.background(color: color)) }
+}
+
+public enum ANSIColor: Int {
+  case black = 30, red, green, yellow, blue, magenta, cyan, white
+}
+
+public enum ANSIStyle: Int {
+  case reset = 0, bold, italic, underline, blink, inverse, strikethrough
+}
+
+public enum ANSI {
+  case text(color: ANSIColor)
+  case background(color: ANSIColor)
+  case style(_ style: ANSIStyle)
+  var raw: String {
+    var code = ANSIStyle.reset.rawValue
+    switch self {
+    case .text(let color): code = color.rawValue
+    case .background(let color): code = color.rawValue + 10
+    case .style(let style): code = style.rawValue
+    }
+    return "\u{001B}[\(code)m"
+  }
+}
+
 public func start(_ command: String) {
   #if os(Windows)
     let _ = ShellExecuteW(nil, "open".wide, command.wide, nil, nil, 8)
