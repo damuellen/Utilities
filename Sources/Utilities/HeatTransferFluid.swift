@@ -188,10 +188,10 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
 
   public var description: String {
     "Description:" * name
-      + "Freezing Point [°C]:" * freezeTemperature.celsius.description
+      + "Freezing Point [°C]:" * String(format: "%.1f", freezeTemperature.celsius)
       + "Specific Heat as a Function of Temperature; cp(T) = c0+c1*T\n"
-      + "c0:" * heatCapacity[0].description
-      + "c1:" * heatCapacity[1].description
+      + "c0:" * String(format: "%G", heatCapacity[0])
+      + "c1:" * String(format: "%G", heatCapacity[1])
       + "Calculate with Enthalpy:" * (useEnthalpy ? "YES" : "NO")
       + (enthalpyFromTemperature.isEmpty == false
         ? "Enthalpy as function on Temperature"
@@ -206,7 +206,7 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
       + "Conductivity as a Function of Temperature; lamda(T) = c0+c1*T+c1*T^2"
       + "\n\(Polynomial(thermCon))"
       + "Maximum Operating Temperature [°C]:"
-      * maxTemperature.celsius.description
+      * String(format: "%.1f", maxTemperature.celsius)
   }
 }
 
