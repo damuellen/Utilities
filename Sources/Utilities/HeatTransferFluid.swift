@@ -210,34 +210,6 @@ public struct HeatTransferFluid: CustomStringConvertible, Equatable {
   }
 }
 
-public enum StorageMedium: String {
-  case hiXL = "HitecXL"
-  case xlt600 = "XLT600"
-  case th66 = "TH66"
-  case solarSalt = "SolarSalt"
-
-  static var ss = HeatTransferFluid(
-    name: "Solar Salt",
-    freezeTemperature: 240.0,
-    heatCapacity: [1.44657, 0.000171715],
-    dens: [1969.9, -0.603505, 0],
-    visco: [0.0175373, -7.01716e-05, 7.62774e-08],
-    thermCon: [0.44152, 0.00019, 0],
-    maxTemperature: 400.0,
-    h_T: [], T_h: [],
-    useEnthalpy: false
-  )
-
-  public var properties: HeatTransferFluid {
-    switch self {
-    case .solarSalt:
-      return StorageMedium.ss
-    default:
-      fatalError()
-    }
-  }
-}
-
 extension HeatTransferFluid: Codable {
   enum CodingKeys: String, CodingKey {
     case name
