@@ -74,7 +74,7 @@ public struct CSVReader {
 
   public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String..., dateColumn: Int? = nil) {
     let url = URL(fileURLWithPath: atPath)
-    guard let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
+    guard url.isFileURL, let data = try? Data(contentsOf: url, options: [.mappedIfSafe, .uncached])
     else { return nil }
     self.init(data: data, separator: separator, filter: filter, skip: skip, dateColumn: dateColumn)
   }
