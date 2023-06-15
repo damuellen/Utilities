@@ -32,8 +32,9 @@ extension Decodable {
     if let data = try fileHandle.readToEnd() {
       try fileHandle.close()
       return try decodeFromJSON(data: data)
+    } else {
+      fatalError()
     }
-    try fileHandle.close()
   }
 
   public static func loadFromJSONIfExists(file: URL) throws -> Self? {
