@@ -96,6 +96,8 @@ public func start(_ command: String) {
     if #available(macOS 10.13, *) {
       do { try Process.run("/usr/bin/open", arguments: [command]) } catch {}
     }
+  #else
+    print(command)
   #endif
 }
 #if os(Windows) || os(Linux)
