@@ -15,13 +15,9 @@ public struct Polynomial: Codable, Equatable {
   /// Represents the coefficients of the polynomial
   public let coefficients: [Double]
 
-  public init(coeffs: Double...) {
-    self.coefficients = coeffs
-  }
+  public init(coeffs: Double...) { self.coefficients = coeffs }
 
-  public init(_ array: [Double]) {
-    self.coefficients = array
-  }
+  public init(_ array: [Double]) { self.coefficients = array }
 
   public var indices: CountableRange<Int> { coefficients.indices }
 
@@ -55,7 +51,7 @@ extension Polynomial: CustomStringConvertible {
   public var description: String {
     var s: String = ""
     for (i, c) in coefficients.enumerated() {
-      s += "c\(i):" * String(format: "%.6e", c)
+      s += "c\(i):" * String(format: "%.9g", c)
     }
     return s
   }
