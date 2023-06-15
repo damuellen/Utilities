@@ -73,9 +73,14 @@ public struct CSVReader {
   }
 
   public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String..., dateColumn: Int? = nil) {
-    guard let fileHandle = try? FileHandle(forReadingAtPath: atPath), let data = try? fileHandle.readToEnd() else { return nil }
-    self.init(data: data, separator: separator, filter: filter, skip: skip, dateColumn: dateColumn)
-    try? fileHandle.close()
+    let fileHandle = FileHandle(forReadingAtPath: atPath)
+    let data = try? fileHandle?.readToEnd()
+    try? fileHandle?.close()
+    if let data = data { 
+      self.init(data: data, separator: separator, filter: filter, skip: skip, dateColumn: dateColumn)
+    } else {
+      return nil
+    }
   }
 
   public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = [], dateColumn: Int? = nil) {
