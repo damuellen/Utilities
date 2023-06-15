@@ -51,7 +51,7 @@ extension Polynomial: CustomStringConvertible {
   public var description: String {
     var s: String = ""
     for (i, c) in coefficients.enumerated() {
-      s += "c\(i):" * String(format: "%.9g", c)
+      s += "c\(i):" * String(format: "%.15g", c)
     }
     return s
   }
