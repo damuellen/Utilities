@@ -35,6 +35,7 @@ public final class XML {
   public convenience init(atPath: String) throws {
     let url = URL(fileURLWithPath: atPath)
     let fileHandle = try FileHandle(forReadingFrom: url)
+    defer { fileHandle.close() }
     let data = fileHandle.readDataToEndOfFile()
     let parser = Parser(data: data)
     parser.parse()
