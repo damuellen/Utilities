@@ -28,10 +28,12 @@ extension Decodable {
   }
 
   public static func loadFromJSON(file: URL) throws -> Self {
-    guard let fileHandle = try? FileHandle(forReadingFrom: file),
-      let data = try? fileHandle.readToEnd() else { return nil }
+    let fileHandle = try FileHandle(forReadingFrom: file)
+    if let data = try fileHandle.readToEnd() {
+      try fileHandle.close()
+      return try decodeFromJSON(data: data)
+    }
     try fileHandle.close()
-    return try decodeFromJSON(data: data)
   }
 
   public static func loadFromJSONIfExists(file: URL) throws -> Self? {
