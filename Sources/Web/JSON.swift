@@ -28,7 +28,8 @@ extension Decodable {
   }
 
   public static func loadFromJSON(file: URL) throws -> Self {
-    let data = try Data(contentsOf: file)
+    let fileHandle = try FileHandle(forReadingFrom: file)
+    let data = fileHandle.readDataToEndOfFile()
     return try decodeFromJSON(data: data)
   }
 
