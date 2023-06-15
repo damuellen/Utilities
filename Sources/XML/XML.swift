@@ -34,13 +34,13 @@ public final class XML {
   }
   public convenience init(atPath: String) throws {
     let fileHandle = try FileHandle(forReadingAtPath: atPath)
-    if let data = try fileHandle.readToEnd() {
+    if let data = try fileHandle?.readToEnd() {
       let parser = Parser(data: data)
       parser.parse()
       guard let xml = parser.root else { throw XMLParseError.unexpectedError }
       self.init(xml: xml)
     }
-    try fileHandle.close()
+    try fileHandle?.close()
   }
   public convenience init(data: Data) throws {
     let parser = Parser(data: data)
