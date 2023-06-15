@@ -49,11 +49,9 @@ extension Polynomial: ExpressibleByArrayLiteral {
 
 extension Polynomial: CustomStringConvertible {
   public var description: String {
-    var s: String = ""
-    for (i, c) in coefficients.enumerated() {
-      s += "c\(i):" * String(format: "%.15g", c)
+    coefficients.enumerated().reduce(into: "") {
+      $0 += "c\($1.offset):" * String(format: "%.15g", $1.element)
     }
-    return s
   }
 }
 
