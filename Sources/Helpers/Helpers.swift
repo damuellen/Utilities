@@ -44,7 +44,6 @@ extension Array where Element == Double {
   public static func tabulated(_ table: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
     let m = Int(table.map { $0.largest }.reduce(Double(minWidth), { Swift.max($0, $1) }))
       .description.count
-    let width = (terminalWidth() / minWidth + 1) * minWidth + 1
     let colors = (31...37).compactMap(ANSIColor.init)
     return (table.map { row in
       zip(0..., row).map { String(format: "%.1f", $0.1).leftpad(m + 2).colored(colors[$0.0 % 7]) }.joined(separator: " ")
