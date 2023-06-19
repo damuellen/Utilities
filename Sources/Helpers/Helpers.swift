@@ -102,7 +102,7 @@ public func start(_ command: String) {
 }
 #if os(Windows) || os(Linux)
   extension URL {
-    var windowsPath: String { path.replacingOccurrences(of: "/", with: "\\") }
+    var windowsPath: String { path.replacing("/", with: "\\") }
 
     static public func temporaryFile() -> URL {
       let fm = FileManager.default
