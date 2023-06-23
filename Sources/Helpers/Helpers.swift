@@ -14,6 +14,21 @@ import Foundation
   import WinSDK
 #endif
 
+
+public func terminalHideCursor() {
+  #if os(Linux)
+  print("\u{001B}[?25l", terminator: "")
+  fflush(stdout)
+  #endif
+}
+
+public func terminalShowCursor() {
+  #if os(Linux)
+  print("\u{001B}[?25h", terminator: "")
+  fflush(stdout)
+  #endif
+}
+
 private var cachedTerminalWidth: Int = 0
 public func terminalWidth() -> Int {
   if cachedTerminalWidth > 0 { return cachedTerminalWidth }
