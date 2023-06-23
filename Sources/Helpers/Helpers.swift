@@ -22,9 +22,10 @@ public func terminalHideCursor() {
   #endif
 }
 
-public func terminalShowCursor() {
+public func terminalShowCursor(clearLine: Bool) {
   #if os(Linux)
   print("\u{001B}[?25h", terminator: "")
+  if clearLine { print("\u{001B}[2K", terminator: "\r") }
   fflush(stdout)
   #endif
 }
