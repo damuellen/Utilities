@@ -71,7 +71,7 @@ public struct CSVReader {
       }
     }
   }
-
+  @available(macOS 10.15.4, iOS 13, watchOS 6, tvOS 13, *)
   public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String..., dateColumn: Int? = nil) {
     let fileHandle = FileHandle(forReadingAtPath: atPath)
     let data = try? fileHandle?.readToEnd()
