@@ -1,5 +1,5 @@
 //
-//  Copyright 2021 Daniel Müllenborn
+//  Copyright 2023 Daniel Müllenborn
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -10,25 +10,27 @@
 
 import Foundation
 
-/// Read files only containing floating-point numbers.
+/// A struct to read CSV files containing floating-point numbers.
 /// - Note: Auto-detect of optional String headers.
 public struct CSVReader {
+  /// Optional String array representing the header row of the CSV file.
   public let headerRow: [String]?
+  /// Array of arrays containing the data rows of the CSV file as Double values.
   public let dataRows: [[Double]]
-
+  /// Optional integer representing the index of the date column.
   private let dateColumn: Int?
-
+  /// CSV representation of the entire data.
   public var csv: String { peek(dataRows.indices) }
-
+  /// CSV representation of the first 30 rows.
   public var head: String { peek(0..<min(30, dataRows.endIndex)) }
-
+  /// CSV representation of the last 30 rows (or all rows if less than 30).
   public var tail: String {
     if dataRows.count > 30 {
       return peek(dataRows.endIndex - 30..<dataRows.endIndex)
     }
     return peek(0..<dataRows.endIndex)
   }
-
+  /// Array of Date objects parsed from the date column, if available.
   public var dates: [Date] {
     if let dateColumn = dateColumn {
       return dataRows.indices.map { Date(timeIntervalSince1970: dataRows[$0][dateColumn]) }
@@ -36,7 +38,7 @@ public struct CSVReader {
       return []
     }    
   }
-
+  /// Generate a CSV representation of the specified rows range.
   public func peek(_ range: Array<Any>.Indices) -> String {
     if let headerRow = headerRow {
       let minWidth: Int = headerRow.map { $0.count }.max() ?? 1
@@ -48,20 +50,20 @@ public struct CSVReader {
     }
     return Array.tabulated(dataRows[range]).0
   }
-
+  /// Access data rows using subscript.
   public subscript(row: Int) -> [Double] {
     dataRows[row]
   }
-
+  /// Access a specific value using subscript with column name and row index.
   public subscript(column: String, row: Int) -> Double {
     dataRows[row][headerRow?.firstIndex(of: column) ?? dataRows[row].startIndex]
   }
-
+  /// Access data for a specific column using subscript with column name.
   public subscript(column: String) -> [Double] {
     let c = headerRow?.firstIndex(of: column) ?? dataRows[0].startIndex
     return self[column: c]
   }
-
+  /// Access data for a specific column using subscript with column index.
   public subscript(column c: Int) -> [Double] {
     return [Double](unsafeUninitializedCapacity: dataRows.count) {
       uninitializedMemory, resultCount in
@@ -71,6 +73,7 @@ public struct CSVReader {
       }
     }
   }
+  /// Initialize a CSVReader from a file path.
   @available(macOS 10.15.4, iOS 13, watchOS 6, tvOS 13, *)
   public init?(atPath: String, separator: Unicode.Scalar = ",", filter: String..., skip: String..., dateColumn: Int? = nil) {
     let fileHandle = FileHandle(forReadingAtPath: atPath)
@@ -82,7 +85,7 @@ public struct CSVReader {
       return nil
     }
   }
-
+  /// Initialize a CSVReader from raw data.
   public init?(data: Data, separator: Unicode.Scalar = ",", filter: [String] = [], skip: [String] = [], dateColumn: Int? = nil) {
     let newLine = UInt8(ascii: "\n")
     let cr = UInt8(ascii: "\r")
@@ -144,6 +147,7 @@ public struct CSVReader {
   }  
 }
 
+/// Function to parse numerical data from a buffer with a specific separator.
 private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: [Int]) -> [Double] {
   let power = [1.0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17]
   let base = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
@@ -199,6 +203,7 @@ private func parse(_ buffer: UnsafeRawBufferPointer, separator: UInt8, exclude: 
   return a
 }
 
+/// Function to parse the date from a buffer with a specific separator and at a specific index.
 private func parseDate(_ buffer: UnsafeRawBufferPointer, separator: UInt8, at: Int) -> Double {
   let dateString = buffer.split(separator: separator, maxSplits: at + 1, omittingEmptySubsequences: false)[at]
   let date = dateString.split(maxSplits: 6, omittingEmptySubsequences: false, whereSeparator: { $0 < UInt8(ascii: "0") || $0 > UInt8(ascii: "9")})
