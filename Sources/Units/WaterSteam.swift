@@ -12,11 +12,21 @@ import Libc
 
 /// IAPWS formulations of the thermodynamic properties of water and steam.
 public struct WaterSteam: Codable {
+  /// The temperature of the water/steam.
   public var temperature: Temperature
+  /// The pressure of the water/steam.
   public var pressure: Double
+  /// The mass flow rate of the water/steam.
   public var massFlow: Double
+  /// The specific enthalpy of the water/steam.
   public var enthalpy: Double
 
+  /// Creates a WaterSteam instance with the provided properties.
+  /// - Parameters:
+  ///   - temperature: The temperature of the water/steam.
+  ///   - pressure: The pressure of the water/steam.
+  ///   - massFlow: The mass flow rate of the water/steam.
+  ///   - enthalpy: The specific enthalpy of the water/steam.
   public init(
     temperature: Temperature,
     pressure: Double,
@@ -28,33 +38,47 @@ public struct WaterSteam: Codable {
     self.massFlow = massFlow
     self.enthalpy = enthalpy
   }
-  /// Temperature on boiling point curve.
+  /// Calculates the temperature on the boiling point curve for the given pressure.
+  /// - Parameter pressure: The pressure at which to calculate the temperature.
+  /// - Returns: The temperature on the boiling point curve.
   public static func temperature(pressure: Double) -> Temperature {
     let p = pressure / 10
     return Temperature(Ts_p(p))
   }
 
-  /// Specific enthalpy [kJ/kg] on the boiling point curve.
+  /// Calculates the specific enthalpy (kJ/kg) on the boiling point curve for the given pressure.
+  /// - Parameter pressure: The pressure at which to calculate the specific enthalpy.
+  /// - Returns: The specific enthalpy on the boiling point curve.
   public static func enthalpyLiquid(pressure: Double) -> Double {
     let p = pressure / 10
     let t = Ts_p(p)
     return h_pT(p, t, 1)
   }
 
-  /// Specific enthalpy [kJ/kg] on the dew point curve.
+  /// Calculates the specific enthalpy (kJ/kg) on the dew point curve for the given pressure.
+  /// - Parameter pressure: The pressure at which to calculate the specific enthalpy.
+  /// - Returns: The specific enthalpy on the dew point curve.
   public static func enthalpyVapor(pressure: Double) -> Double {
     let p = pressure / 10
     let t = Ts_p(p)
     return h_pT(p, t, 2)
   }
-
+  /// Calculates the specific enthalpy (kJ/kg) for the given pressure and temperature.
+  /// - Parameters:
+  ///   - pressure: The pressure of the water/steam.
+  ///   - temperature: The temperature of the water/steam.
+  /// - Returns: The specific enthalpy of the water/steam.
   public static func enthalpy(pressure: Double, temperature: Temperature) -> Double {
     let p = pressure / 10
     let t = temperature.kelvin
     let r = region_pT(p, t)
     return h_pT(p, t, r)
   }
-
+  /// Calculates the temperature of the water/steam for the given pressure and specific enthalpy.
+  /// - Parameters:
+  ///   - pressure: The pressure of the water/steam.
+  ///   - enthalpy: The specific enthalpy of the water/steam.
+  /// - Returns: The temperature of the water/steam.
   public static func temperature(pressure: Double, enthalpy: Double) -> Temperature {
     let p = pressure / 10
     let h = enthalpy
@@ -63,13 +87,24 @@ public struct WaterSteam: Codable {
 }
 
 extension WaterSteam {
+  /// Creates a WaterSteam instance with the provided temperature, pressure, and mass flow rate.
+  /// The enthalpy is calculated based on the given pressure and temperature.
+  /// - Parameters:
+  ///   - temperature: The temperature of the water/steam.
+  ///   - pressure: The pressure of the water/steam.
+  ///   - massFlow: The mass flow rate of the water/steam.
   public init(temperature: Temperature, pressure: Double, massFlow: Double) {
     self.temperature = temperature
     self.pressure = pressure
     self.massFlow = massFlow
     self.enthalpy = WaterSteam.enthalpy(pressure: pressure, temperature: temperature)
   }
-
+  /// Creates a WaterSteam instance with the provided specific enthalpy, pressure, and mass flow rate.
+  /// The temperature is calculated based on the given pressure and specific enthalpy.
+  /// - Parameters:
+  ///   - enthalpy: The specific enthalpy of the water/steam.
+  ///   - pressure: The pressure of the water/steam.
+  ///   - massFlow: The mass flow rate of the water/steam.
   public init(enthalpy: Double, pressure: Double, massFlow: Double) {
     self.pressure = pressure
     self.massFlow = massFlow
