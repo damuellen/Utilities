@@ -18,6 +18,7 @@ let package = Package(
 #else
 let package = Package(
   name: "Utilities",
+  platforms: [.macOS(.v13), .iOS(.v16)],
   products: [.library(name: "Utilities", targets: ["Utilities"])],
   targets: [
     .target(name: "Libc"),
