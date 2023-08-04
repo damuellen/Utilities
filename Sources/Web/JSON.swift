@@ -26,7 +26,7 @@ extension Decodable {
   public static func decodeFromJSON(data: Data) throws -> Self {
     return try JSONDecoder.shared.decode(Self.self, from: data)
   }
-  @available(macOS 10.15.4, iOS 13, watchOS 6, tvOS 13, *)
+  @available(macOS 10.15.4, iOS 13.4, watchOS 6, tvOS 13, *)
   public static func loadFromJSON(file: URL) throws -> Self {
     let fileHandle = try FileHandle(forReadingFrom: file)
     if let data = try fileHandle.readToEnd() {
@@ -36,7 +36,7 @@ extension Decodable {
       fatalError()
     }
   }
-  @available(macOS 10.15.4, iOS 13, watchOS 6, tvOS 13, *)
+  @available(macOS 10.15.4, iOS 13.4, watchOS 6, tvOS 13, *)
   public static func loadFromJSONIfExists(file: URL) throws -> Self? {
     guard FileManager.default.fileExists(atPath: file.path) else { return nil }
     return try loadFromJSON(file: file)
