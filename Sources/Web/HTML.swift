@@ -1,5 +1,5 @@
 //
-//  Copyright 2021 Daniel Müllenborn
+//  Copyright 2023 Daniel Müllenborn
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -113,14 +113,18 @@ public struct HTML: CustomStringConvertible {
         height: 95vh;
         width: 98%;
       }
+      img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
       tspan { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
       body { background-color: rgb(247,247,247); }
       @media (prefers-color-scheme: dark) {
-        svg { filter: drop-shadow(3px 3px 3px rgb(255, 255, 255)); }
+        svg { filter: drop-shadow(3px 3px 3px rgb(255, 255, 255)); filter: invert(1); }
         body {
           background-color: rgb(20,20,20);
           background-image: radial-gradient(circle, rgb(50,50,50), rgb(20,20,20));
-          filter: invert(1);
         }
       }
     </style>
