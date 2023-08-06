@@ -118,9 +118,11 @@ public struct HTML: CustomStringConvertible {
         margin-left: auto;
         margin-right: auto;
       }
+      pre { font-size: 28px; }
       tspan { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
       body { background-color: rgb(247,247,247); }
       @media (prefers-color-scheme: dark) {
+        pre { color: white; }
         svg { filter: drop-shadow(3px 3px 3px rgb(255, 255, 255)); filter: invert(1); }
         body {
           background-color: rgb(20,20,20);
@@ -137,23 +139,20 @@ public struct HTML: CustomStringConvertible {
     <script>new JSONEditor(document.getElementById("jsoneditor"), {},
     """
 
-  private let toggle: String = """
-    <style media="screen">
-    body { overflow: hidden; }
-    </style>
-    <script type="text/javascript">
-    function toggle() {
-    const e = document.getElementsByClassName("c")[0];
-    e.style.display = ((e.style.display!='none') ? 'none' : 'block');
-    }</script>
-    """
-
   private var raw: String {
-    let head: String = "<html lang=\"en\"><head>" + meta + style + "<link rel=\"icon\" href=\"data:,\"></head>\n<body onclick=\"toggle()\">\n"
+    let head: String = "<html lang=\"en\"><head>" + meta + style + """
+      <link rel=\"icon\" href=\"data:,\"></head>\n<body onclick=\"toggle()\">
+      <script type="text/javascript">
+      function toggle() {
+        const e = document.getElementsByClassName("c")[0];
+        if (e) { e.style.display = ((e.style.display!='none') ? 'none' : 'block'); }
+      }
+      </script>
+      """
     let tail: String = "</body>\n</html>\n"
     if let json = json {
       return type + head + bodyContent + script + json + ")</script>" + tail
     }
-    return type + head + toggle + bodyContent + tail
+    return type + head + bodyContent + tail
   }
 }
