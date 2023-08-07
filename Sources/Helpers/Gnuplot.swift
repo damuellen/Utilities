@@ -85,9 +85,7 @@ public final class Gnuplot: CustomStringConvertible {
       gnuplot.launchPath = "/opt/homebrew/bin/gnuplot"
     }
 #endif
-#if !os(Windows)
     gnuplot.standardInput = Pipe()
-#endif
     gnuplot.standardOutput = Pipe()
     gnuplot.standardError = nil
     return gnuplot
