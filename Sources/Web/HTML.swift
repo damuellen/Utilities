@@ -118,11 +118,11 @@ public struct HTML: CustomStringConvertible {
         margin-left: auto;
         margin-right: auto;
       }
-      pre { font-size: 28px; }
+      pre { font-size: 40px; }
       tspan { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
       body { background-color: rgb(247,247,247); }
       @media (prefers-color-scheme: dark) {
-        pre { color: white; }
+        pre, h1 { color: rgb(247,247,247); }
         svg { filter: drop-shadow(3px 3px 3px rgb(255, 255, 255)); filter: invert(1); }
         body {
           background-color: rgb(20,20,20);
