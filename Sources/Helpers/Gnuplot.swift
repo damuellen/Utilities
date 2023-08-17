@@ -92,9 +92,8 @@ public final class Gnuplot: CustomStringConvertible {
 #elseif os(macOS)
     gnuplot.executableURL = .init(fileURLWithPath: "/opt/homebrew/bin/gnuplot")
 #endif
-#if !os(Windows)
+
     gnuplot.standardInput = Pipe()
-#endif
     gnuplot.standardOutput = Pipe()
     gnuplot.standardError = nil
     return gnuplot
