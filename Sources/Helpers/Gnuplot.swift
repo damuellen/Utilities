@@ -88,7 +88,7 @@ public final class Gnuplot: CustomStringConvertible {
     let gnuplot = Process()
 #endif
 #if os(Windows)
-    gnuplot.executableURL = .init(fileURLWithPath: "gnuplot.exe")
+    gnuplot.executableURL = .init(fileURLWithPath: "%AppData%/gnuplot/gnuplot.exe")
 #elseif os(macOS)
     gnuplot.executableURL = .init(fileURLWithPath: "/opt/homebrew/bin/gnuplot")
 #endif
