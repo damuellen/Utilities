@@ -35,7 +35,8 @@ public struct HTML: CustomStringConvertible {
         "-O", "Landscape", "--dpi", "600", path, name,
       ]
       #if os(Windows)
-        wkhtmltopdf.executableURL = "C:/bin/wkhtmltopdf.exe"
+        let localappdata = ProcessInfo.processInfo.environment["LOCALAPPDATA"]!
+        wkhtmltopdf.executableURL = .init(fileURLWithPath: localappdata + "/Microsoft/WindowsApps/wkhtmltopdf.exe")
       #else
         wkhtmltopdf.executableURL = "/usr/local/bin/wkhtmltopdf"
       #endif

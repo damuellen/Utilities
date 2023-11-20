@@ -58,15 +58,21 @@ public final class Gnuplot: CustomStringConvertible {
       } else {
         term = Terminal.svg()
       }
-      guard let data = try callAsFunction(term),
-      case .svg(let width, let height) = term,
+      guard let data = try callAsFunction(term) else {
+        return nil 
+      }
+#if os(Linux)
+      guard case .svg(let width, let height) = term,
       let start = data.firstIndex(where: {$0 == UInt8(ascii: ">")})?.advanced(by: 1)
       else { return nil }
       let namespace = #"xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">"#
       let tag = #"<svg width="\#(width+25)" height="\#(height)" viewBox="0 0 \#(width+25) \#(height)" "# + namespace
       return tag + String(decoding: data[start...], as: Unicode.UTF8.self)
+#else
+      return String(decoding: data, as: Unicode.UTF8.self)
+#endif
     } catch {
-      print(error)
+
       return nil
     }
   }
@@ -87,12 +93,13 @@ public final class Gnuplot: CustomStringConvertible {
 #else
     let gnuplot = Process()
 #endif
+
 #if os(Windows)
-    gnuplot.executableURL = .init(fileURLWithPath: "gnuplot")
+    let localappdata = ProcessInfo.processInfo.environment["LOCALAPPDATA"]!
+    gnuplot.executableURL = .init(fileURLWithPath: localappdata + "/Microsoft/WindowsApps/gnuplot.exe")
 #elseif os(macOS)
     gnuplot.executableURL = .init(fileURLWithPath: "/opt/homebrew/bin/gnuplot")
 #endif
-
     gnuplot.standardInput = Pipe()
     gnuplot.standardOutput = Pipe()
     gnuplot.standardError = nil
