@@ -41,9 +41,7 @@ public class HTTP {
   }
 
   public func start() {
-    #if os(Windows)
-    port = Int.random(in: 8008...8040)
-    #endif
+
     func runServer() throws {
       if HTTP.serverActive { return }
       HTTP.server = try Server(port: UInt16(port))
