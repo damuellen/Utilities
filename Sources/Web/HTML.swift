@@ -142,13 +142,16 @@ public struct HTML: CustomStringConvertible {
 
   private var raw: String {
     let head: String = "<html lang=\"en\"><head>" + meta + style + """
-      <link rel=\"icon\" href=\"data:,\"></head>\n<body onclick=\"toggle()\">
+      <link rel=\"icon\" href=\"data:,\"></head>
       <script type="text/javascript">
+      function fnOnError(msg,url,lineno){ return true; }
+      window.onerror = fnOnError;
       function toggle() {
         const e = document.getElementsByClassName("c")[0];
         if (e) { e.style.display = ((e.style.display!='none') ? 'none' : 'block'); }
       }
       </script>
+      <body onclick=\"toggle()\">
       """
     let tail: String = "</body>\n</html>\n"
     if let json = json {
