@@ -395,6 +395,7 @@ extension HTTP {
     var messageBody: String?
     var messageData: Data?
     public var description: String { return "\(method.rawValue) \(uri)" }
+    public subscript(_ key: String) -> String? { parameters[key] }
     init(header: String) throws {
       self.headers = header.components(separatedBy: Headers.CRLF)
       guard headers.count > 0 else { throw Error.invalidURI }
