@@ -31,6 +31,7 @@ extension Double {
 public func * (lhs: String, rhs: String) -> String {
   var width = terminalWidth()
   width.clamp(to: 80...110)
+  let lhs = lhs.replacing("|", with: " - ")
   var c = width - lhs.count - rhs.count - 1
   c = c < 0 ? 1 : c
   return lhs + String(repeating: " ", count: c) + rhs + "\n"
