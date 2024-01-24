@@ -15,7 +15,7 @@ import Libc
 /// Power is the amount of energy used over time.
 /// The SI unit for power is the watt (W),
 /// which is derived as one joule per second (1W = 1J / 1s).
-public struct Power: Codable {
+public struct Power {
   /// Returns the watts unit of power.
   public var watt: Double
   /// Returns the megawatts unit of power.
@@ -89,5 +89,19 @@ extension Power: AdditiveArithmetic {
 
   public static func -= (lhs: inout Power, rhs: Power) {
     lhs = Power(lhs.watt - rhs.watt)
+  }
+}
+
+extension Power: Encodable {
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    try container.encode(megaWatt)
+  }
+}
+
+extension Power: Decodable {
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    self.watt = try container.decode(Double.self) * 1_000_000
   }
 }
