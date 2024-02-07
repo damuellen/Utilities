@@ -273,6 +273,11 @@ public final class Gnuplot: CustomStringConvertible {
     return self
   }
 
+  @discardableResult public func set(y2label: String) -> Self {
+    settings["y2label"] = "'\(y2label)'"
+    return self
+  }
+  
   @discardableResult public func set<T: BinaryFloatingPoint>(xrange x: ClosedRange<T>) -> Self {
     settings["xrange"] = "\(x.lowerBound):\(x.upperBound)"
     return self
