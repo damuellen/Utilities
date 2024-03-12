@@ -8,9 +8,22 @@
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
 
-import Dispatch
 import Foundation
 import Helpers
+
+#if canImport(WASILibc)
+
+public class HTTP {
+  public init(handler: @escaping (Request) -> Response) { self.handler = handler }
+  public var port: Int = 0
+  public let handler: (Request) -> Response
+  public func start() { }
+  public func stop() { }
+  deinit { stop() }
+}
+#else
+
+import Dispatch
 
 #if canImport(CRT)
   import CRT
@@ -19,6 +32,8 @@ import Helpers
   import Darwin
 #elseif canImport(Glibc)
   import Glibc
+#elseif canImport(WASILibc)
+  import WASILibc
 #endif
 
 #if !os(Windows)
@@ -62,14 +77,6 @@ public class HTTP {
   }
 
   deinit { stop() }
-}
-
-public struct Headers {
-  public static let VERSION = "HTTP/1.1"
-  public static let CRLF = "\r\n"
-  public static let CRLF2 = CRLF + CRLF
-  public static let EMPTY = ""
-  public static let SPACE = " "
 }
 
 extension UInt16 { public init(networkByteOrder input: UInt16) { self.init(bigEndian: input) } }
@@ -271,6 +278,15 @@ class TCPSocket: CustomStringConvertible {
   }
   deinit { try? closeSocket() }
 }
+#endif
+
+public struct Headers {
+  public static let VERSION = "HTTP/1.1"
+  public static let CRLF = "\r\n"
+  public static let CRLF2 = CRLF + CRLF
+  public static let EMPTY = ""
+  public static let SPACE = " "
+}
 
 extension HTTP {
 
@@ -278,7 +294,7 @@ extension HTTP {
     public var description: String {
       return "HTTPServer @ 0x" + String(unsafeBitCast(self, to: UInt.self), radix: 16)
     }
-
+#if !canImport(WASILibc)
     struct SocketDataReader {
       private let tcpSocket: TCPSocket
       private var buffer = Data()
@@ -373,6 +389,7 @@ extension HTTP {
     func respond(with response: Response) throws {
       try tcpSocket.writeData(header: response.header, bodyData: response.bodyData)
     }
+    #endif
   }
 
   public struct Request: CustomStringConvertible {
