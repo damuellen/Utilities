@@ -1,7 +1,7 @@
 // swift-tools-version:5.7
 import PackageDescription
 
-#if os(Linux)
+#if canImport(Glibc)
 let package = Package(
   name: "Utilities",
   products: [.library(name: "Utilities", targets: ["Utilities"])],
