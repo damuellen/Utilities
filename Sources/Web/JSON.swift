@@ -36,11 +36,13 @@ extension Decodable {
       fatalError()
     }
   }
+  #if !canImport(WASILibc)
   @available(macOS 10.15.4, iOS 13.4, watchOS 6, tvOS 13, *)
   public static func loadFromJSONIfExists(file: URL) throws -> Self? {
     guard FileManager.default.fileExists(atPath: file.path) else { return nil }
     return try loadFromJSON(file: file)
   }
+  #endif
 }
 
 extension Encodable {
@@ -48,7 +50,7 @@ extension Encodable {
     let data = try JSONEncoder.shared.encode(self)
     return String(decoding: data, as: Unicode.UTF8.self)
   }
-
+  #if !canImport(WASILibc)
   public func storeToJSON(file: URL) throws {
     let data = try JSONEncoder.shared.encode(self)
     let dir = file.deletingLastPathComponent()
@@ -57,4 +59,5 @@ extension Encodable {
     )
     try data.write(to: file, options: [.atomic])
   }
+  #endif
 }
