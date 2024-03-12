@@ -76,8 +76,11 @@ public final class Gnuplot: CustomStringConvertible {
       return nil
     }
   }
-
-#if os(iOS)
+#if canImport(WASILibc)
+    @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
+      commands(terminal).data(using: .utf8)
+    }
+#elseif os(iOS)
     @discardableResult public func callAsFunction(_ terminal: Terminal) throws -> Data? {
       commands(terminal).data(using: .utf8)
     }
@@ -118,6 +121,8 @@ public final class Gnuplot: CustomStringConvertible {
     try plot.removeItem()
     return data
   }
+#elseif canImport(WASILibc)
+  
 #elseif !os(iOS)
   /// Calls the gnuplot process with the specified terminal settings.
   /// - Parameter terminal: The terminal settings to use.
