@@ -32,6 +32,9 @@ public func terminalShowCursor(clearLine: Bool) {
 
 private var cachedTerminalWidth: Int = 0
 public func terminalWidth() -> Int {
+#if canImport(WASILibc)
+  return 80
+#else
   if cachedTerminalWidth > 0 { return cachedTerminalWidth }
   #if os(Windows)
     var csbi: CONSOLE_SCREEN_BUFFER_INFO = CONSOLE_SCREEN_BUFFER_INFO()
@@ -54,6 +57,7 @@ public func terminalWidth() -> Int {
   #endif
   if cachedTerminalWidth < 0 { cachedTerminalWidth = 150 }
   return cachedTerminalWidth
+  #endif
 }
 
 extension Array where Element == Double {
@@ -211,7 +215,7 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
   }
   return Double.nan
 }
-
+#if !canImport(WASILibc)
 @_alwaysEmitIntoClient public func concurrentSeek(
   goal: Double, _ range: ClosedRange<Double> = 0...1, tolerance: Double = 0.0001,
   maxIterations: Int = 100, _ f: (Double) -> Double
@@ -230,7 +234,7 @@ extension Collection where Self.Iterator.Element: RandomAccessCollection {
   }
   return Double.nan
 }
-
+#endif
 // Fitting y = a0 + a1*x
 // least squares method
 // a0 =  (sumX - sumY) * sumXY / (sumX * sumX - n * sumXY)
