@@ -7,7 +7,7 @@
 //
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
-
+#if !canImport(WASILibc)
 import Foundation
 
 #if canImport(FoundationXML)
@@ -86,3 +86,4 @@ private class Parser: NSObject, XMLParserDelegate {
     qualifiedName qName: String?
   ) { currentElement = currentElement?.parent }
 }
+#endif
