@@ -9,383 +9,603 @@
 //
 
 import Foundation
+import Helpers
 
-#if os(Windows)
-  import WinSDK
-#endif
-
-
-public func terminalHideCursor() {
-  #if os(Linux)
-  print("\u{001B}[?25l", terminator: "")
-  fflush(stdout)
-  #endif
-}
-
-public func terminalShowCursor(clearLine: Bool) {
-  #if os(Linux)
-  print("\u{001B}[?25h", terminator: "")
-  if clearLine { print("\u{001B}[2K", terminator: "\r") }
-  fflush(stdout)
-  #endif
-}
-
-private var cachedTerminalWidth: Int = 0
-public func terminalWidth() -> Int {
 #if canImport(WASILibc)
-  return 80
+
+public class HTTP {
+  public init(handler: @escaping (Request) -> Response) { self.handler = handler }
+  public var port: Int = 0
+  public let handler: (Request) -> Response
+  public func start() { }
+  public func stop() { }
+  deinit { stop() }
+}
 #else
-  if cachedTerminalWidth > 0 { return cachedTerminalWidth }
-  #if os(Windows)
-    var csbi: CONSOLE_SCREEN_BUFFER_INFO = CONSOLE_SCREEN_BUFFER_INFO()
-    if GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi) {
-      let width = Int(csbi.srWindow.Right - csbi.srWindow.Left)
-      cachedTerminalWidth = width
-    } else {
-      cachedTerminalWidth = 80
-    }
-  #elseif os(iOS)
-    cachedTerminalWidth = 80
-  #else
-    // First try to get from environment.
-  if let columns: String = ProcessInfo.processInfo.environment["COLUMNS"], let width = Int(columns) {
-      cachedTerminalWidth = width
-    } else {
-      var ws = winsize()
-      if ioctl(1, UInt(TIOCGWINSZ), &ws) == 0 { cachedTerminalWidth = Int(ws.ws_col) - 1 }
-    }
-  #endif
-  if cachedTerminalWidth < 0 { cachedTerminalWidth = 150 }
-  return cachedTerminalWidth
-  #endif
-}
 
-extension Array where Element == Double {
-  public static func tabulated(_ table: ArraySlice<[Double]>, minWidth: Int = 1) -> (String, Int) {
-    let m = Int(table.map { $0.largest }.reduce(Double(minWidth), { Swift.max($0, $1) }))
-      .description.count
-    let colors = (31...37).compactMap(ANSIColor.init)
-    return (table.map { row in
-      zip(0..., row).map { String(format: "%.1f", $0.1).leftpad(m + 2).colored(colors[$0.0 % 7]) }.joined(separator: " ")
-    }.joined(separator: "\n"), m + 2)
-  }
+import Dispatch
 
-  var largest: Double { self.map { $0.magnitude }.max() ?? 0 }
-}
-
-extension String {
-  func escape(_ sequence: ANSI) -> String {
-    #if os(Windows)
-    return self
-    #else
-    return "\(sequence.raw)\(self)\(ANSI.style(.reset).raw)"
-    #endif
-  }
-  public func styled(_ style: ANSIStyle) -> String { escape(.style(style)) }
-  public func colored(_ color: ANSIColor = .init(rawValue: Int.random(in: 31...37))!) -> String { escape(.text(color: color)) }
-  public func background(_ color: ANSIColor) -> String { escape(.background(color: color)) }
-}
-
-public enum ANSIColor: Int {
-  case black = 30, red, green, yellow, blue, magenta, cyan, white
-}
-
-public enum ANSIStyle: Int {
-  case reset = 0, bold, italic, underline, blink, inverse, strikethrough
-}
-
-public enum ANSI {
-  case text(color: ANSIColor)
-  case background(color: ANSIColor)
-  case style(_ style: ANSIStyle)
-  var raw: String {
-    var code = ANSIStyle.reset.rawValue
-    switch self {
-    case .text(let color): code = color.rawValue
-    case .background(let color): code = color.rawValue + 10
-    case .style(let style): code = style.rawValue
-    }
-    return "\u{001B}[\(code)m"
-  }
-}
-
-public func start(_ command: String) {
-  #if os(Windows)
-    let _ = ShellExecuteW(nil, "open".wide, command.wide, nil, nil, 8)
-  #elseif os(macOS)
-    if #available(macOS 10.13, *) {
-      do { try Process.run("/usr/bin/open", arguments: [command]) } catch {}
-    }
-  #else
-    print(command)
-  #endif
-}
-#if os(Windows) || os(Linux)
-  extension URL {
-    var windowsPath: String { path.replacing("/", with: "\\") }
-
-    static public func temporaryFile() -> URL {
-      let fm = FileManager.default
-      let id = String(Int(Date().timeIntervalSince1970), radix: 36, uppercase: true)
-      return fm.temporaryDirectory.appendingPathComponent(String(id.suffix(5)))
-    }
-
-    public func removeItem() throws { try FileManager.default.removeItem(at: self) }
-  }
+#if canImport(CRT)
+  import CRT
+  import WinSDK
+#elseif canImport(Darwin)
+  import Darwin
+#elseif canImport(Glibc)
+  import Glibc
+#elseif canImport(WASILibc)
+  import WASILibc
 #endif
 
-extension Date: ExpressibleByStringLiteral {
-  public init(stringLiteral: String) { self.init(Substring(stringLiteral)) }
-  public init(_ dateString: Substring) {
-    let values: [Int32] = dateString.split(
-      maxSplits: 6, 
-      omittingEmptySubsequences: true, 
-      whereSeparator: {!$0.isWholeNumber}
-    ).compactMap { Int32($0) }
-    var t = time_t()
-    time(&t)
-    #if os(Windows)
-    var info = tm()
-    localtime_s(&info, &t)
-    #else
-    var info = localtime(&t)!.pointee
-    #endif
-    info.tm_year = values[0] - 1900
-    info.tm_mon = values[1] - 1
-    info.tm_mday = values[2]
-    if values.count > 4 {
-      info.tm_hour = values[3]
-      info.tm_min = values[4]
-    }
-    if values.count > 5 {
-      info.tm_sec = values[5]
-    }
-    let time: time_t = mktime(&info)
-    self.init(timeIntervalSince1970: TimeInterval(time))
-  }
-}
-
-extension URL: ExpressibleByStringLiteral {
-  public init(stringLiteral value: String) { self.init(fileURLWithPath: value) }
-}
-
-extension String {
-  @inlinable public func leftpad(_ length: Int, character: Character = " ") -> String {
-    var outString: String = self
-    let extraLength = length - outString.count
-    var i = 0
-    while i < extraLength {
-      outString.insert(character, at: outString.startIndex)
-      i += 1
-    }
-    return outString
-  }
-  
-  @inlinable public subscript(_ range: CountableRange<Int>) -> String {
-    let start = self.index(self.startIndex, offsetBy: max(0, range.lowerBound))
-    let end = self.index(start, offsetBy: min(self.count - range.lowerBound, range.upperBound - range.lowerBound))
-    return String(self[start..<end])
-  }
-
-  @inlinable public subscript(_ range: CountablePartialRangeFrom<Int>) -> String {
-    let start = self.index(self.startIndex, offsetBy: max(0, range.lowerBound))
-    return String(self[start...])
-  }
-}
-
-extension Collection where Self.Iterator.Element: RandomAccessCollection {
-  @_alwaysEmitIntoClient public func transposed() -> [[Self.Iterator.Element.Iterator.Element]] {
-    guard let firstRow = self.first else { return [] }
-    return firstRow.indices.map { index in self.map { $0[index] } }
-  }
-}
-
-@_alwaysEmitIntoClient public func seek(
-  goal: Double, _ range: ClosedRange<Double> = 0...1, tolerance: Double = 0.0001,
-  maxIterations: Int = 100, _ f: (Double) -> Double
-) -> Double {
-  var a: Double = range.lowerBound
-  var b: Double = range.upperBound
-  for _ in 0..<maxIterations {
-    let c: Double = (a + b) / 2.0
-    let fc: Double = f(c)
-    let fa: Double = f(a)
-    if fc == goal || (b - a) / 2.0 < tolerance { return c }
-    if (fc < goal && fa < goal) || (fc > goal && fa > goal) { a = c } else { b = c }
-  }
-  return Double.nan
-}
-#if !canImport(WASILibc)
-@_alwaysEmitIntoClient public func concurrentSeek(
-  goal: Double, _ range: ClosedRange<Double> = 0...1, tolerance: Double = 0.0001,
-  maxIterations: Int = 100, _ f: (Double) -> Double
-) -> Double {
-  var x: [Double] = [range.lowerBound, 0.0, range.upperBound]
-  var y: [Double] = [0.0, 0.0]
-  for _ in 0..<maxIterations {
-    x[1] = (x[0] + x[2]) / 2
-    DispatchQueue.concurrentPerform(iterations: 2) { i in y[i] = f(x[i]) }
-    if y[1] == goal || (x[2] - x[0]) / 2 < tolerance { return x[1] }
-    if (y[1] < goal && y[0] < goal) || (y[1] > goal && y[0] > goal) {
-      x[0] = x[1]
-    } else {
-      x[2] = x[1]
-    }
-  }
-  return Double.nan
-}
+#if !os(Windows)
+  typealias SOCKET = Int32
 #endif
-// Fitting y = a0 + a1*x
-// least squares method
-// a0 =  (sumX - sumY) * sumXY / (sumX * sumX - n * sumXY)
-// a1 =  (sumX * sumY - n * sumXY) / (sumX * sumX - n * sumXX)
-@_alwaysEmitIntoClient public func linearFit(x: [Double], y: [Double]) -> (Double) -> Double {
-  var sumX: Double = 0
-  var sumY: Double = 0
-  var sumXY: Double = 0
-  var sumXX: Double = 0
-  let count = min(x.count, y.count)
-  for i in 0..<count {
-    sumX += x[i]
-    sumY += y[i]
-    sumXX += x[i] * x[i]
-    sumXY += x[i] * y[i]
+
+public class HTTP {
+  public init(handler: @escaping (Request) -> Response) { self.handler = handler }
+  public var port: Int = 8008
+  public let handler: (Request) -> Response
+  private static let staticSyncQ = DispatchQueue(label: "com.http.server.StaticSyncQ")
+  private static var dispatchQueue = DispatchQueue(
+    label: "com.http.server.queue", qos: .userInteractive)
+  private static var _serverActive = false
+  private static var server: Server? = nil
+
+  static var serverActive: Bool {
+    get { return staticSyncQ.sync { _serverActive } }
+    set { staticSyncQ.sync { _serverActive = newValue } }
   }
-  let a0 = (sumX - sumY) * sumXY / (sumX * sumX - Double(count) * sumXY)
-  let a1 = (sumX * sumY - Double(count) * sumXY) / (sumX * sumX - Double(count) * sumXX)
 
-  return { value in a0 + a1 * value }
-}
+  public func start() {
 
-extension ClosedRange where Bound == Double {
-  @inlinable public static func / (range: ClosedRange<Double>, _ count: Int) -> (interval: Double, iteration: [Double]) {
-    let interval = (range.upperBound - range.lowerBound) / Double(count)
-    let iteration = Array(stride(from: range.lowerBound, through: range.upperBound, by: interval))
-    return (interval, iteration)
-  }
-}
-
-extension Range where Bound == Double {
-  @inlinable public static func / (range: Range<Double>, _ count: Int) -> (interval: Double, iteration: [Double]) {
-    let interval = (range.upperBound - range.lowerBound) / Double(count)
-    let iteration = Array(stride(from: range.lowerBound, to: range.upperBound, by: interval))
-    return (interval, iteration)
-  }
-}
-
-extension Comparable {
-  public mutating func clamp(to limits: ClosedRange<Self>) {
-    self = min(max(self, limits.lowerBound), limits.upperBound)
-  }
-  public func clamped(to limits: ClosedRange<Self>) -> Self {
-    min(max(self, limits.lowerBound), limits.upperBound)
-  }
-}
-
-/// Sorts the given arguments in ascending order, and returns the middle value.
-///
-///     // Values clamped to `0...100`
-///     median(0, .min, 100)  //-> 0
-///     median(0, .max, 100)  //-> 100
-///
-/// - Parameters:
-///   - x: A value to compare.
-///   - y: Another value to compare.
-///   - z: A third value to compare.
-///
-/// - Returns: The middle value.
-@_alwaysEmitIntoClient public func median<T: Comparable>(_ x: T, _ y: T, _ z: T) -> T {
-  var (x, y, z) = (x, y, z)
-  // Compare (and swap) each pair of adjacent variables.
-  if x > y { (x, y) = (y, x) }
-  if y > z {
-    (y, z) = (z, y)
-    if x > y { (x, y) = (y, x) }
-  }
-  // Now `x` has the least value, and `z` has the greatest value.
-  return y
-}
-
-/// Sorts the given arguments in ascending order, and returns the middle value.
-///
-///     // Values clamped to `0.0...1.0`
-///     median(0.0, -.pi, 1.0)  //-> 0.0
-///     median(0.0, +.pi, 1.0)  //-> 1.0
-///
-/// The sorted values will be totally ordered, including signed zeros and NaNs.
-///
-/// - Parameters:
-///   - x: A value to compare.
-///   - y: Another value to compare.
-///   - z: A third value to compare.
-///
-/// - Returns: The middle value.
-@_alwaysEmitIntoClient public func median<T: FloatingPoint>(_ x: T, _ y: T, _ z: T) -> T {
-  var (x, y, z) = (x, y, z)
-  // Compare (and swap) each pair of adjacent variables.
-  if !x.isTotallyOrdered(belowOrEqualTo: y) { (x, y) = (y, x) }
-  if !y.isTotallyOrdered(belowOrEqualTo: z) {
-    (y, z) = (z, y)
-    if !x.isTotallyOrdered(belowOrEqualTo: y) { (x, y) = (y, x) }
-  }
-  // Now `x` has the least value, and `z` has the greatest value.
-  return y
-}
-
-/// Sorts the given arguments in ascending order, and returns the middle value,
-/// or the arithmetic mean of two middle values.
-///
-///     median(1, 2)            //-> 1.5
-///     median(1, 2, 4)         //-> 2
-///     median(1, 2, 4, 8)      //-> 3
-///     median(1, 2, 4, 8, 16)  //-> 4
-///
-/// The sorted values will be totally ordered, including signed zeros and NaNs.
-///
-/// - Parameters:
-///   - x: A value to compare.
-///   - y: Another value to compare.
-///   - rest: Zero or more additional values.
-///
-/// - Returns: The middle value, or the arithmetic mean of two middle values.
-@_alwaysEmitIntoClient public func median<T: FloatingPoint>(_ x: T, _ y: T, _ rest: T...) -> T {
-  func _mean(_ a: T, _ b: T) -> T {
-    if (a.sign == b.sign) { // Avoid overflowing to infinity, by choosing to
-      return a + ((b - a) / 2)  // ? either advance by half the distance,
-    } else {
-      return (a + b) / 2  // : or use the sum divided by the count.
-    }
-  }
-  guard !rest.isEmpty else { return _mean(x, y) }
-
-  var values = ContiguousArray<T>()
-  values.reserveCapacity(2 + rest.count)
-  values.append(x)
-  values.append(y)
-  values.append(contentsOf: rest)
-  values.sort(by: { !$1.isTotallyOrdered(belowOrEqualTo: $0) })
-
-  let index = (values.endIndex - 1) / 2
-  if values.count.isMultiple(of: 2) {
-    return _mean(values[index], values[index + 1])
-  } else {
-    return values[index]
-  }
-}
-
-extension Array where Element == Double {
-  @_alwaysEmitIntoClient public func interpolate(steps: Int) -> [Double] {
-    guard count > 1 else { return self }
-    return Array(unsafeUninitializedCapacity: self.count + (self.count - 1) * steps, initializingWith: { (array, count) in
-      count = self.count + (self.count - 1) * steps
-      let increment = stride(from: 0, to: count, by: steps + 1)
-      for (a,b) in zip(increment, indices) { array[a] = self[b] }
-      for (x,y) in zip(increment.dropLast(), increment.dropFirst()) {
-        for i in x+1..<y {
-          let lerp = Double(i-x) / Double(y-x)
-          array[i] = array[x] + (lerp * (array[y] - array[x]))
-        } 
+    func runServer() throws {
+      if HTTP.serverActive { return }
+      HTTP.server = try Server(port: UInt16(port))
+      HTTP.serverActive = true
+      while HTTP.serverActive {
+        do {
+          let httpServer = try HTTP.server!.listen()
+          let request = try httpServer.request()
+          try httpServer.respond(with: handler(request))
+        } catch { if HTTP.serverActive {} }
       }
-    })
+    }
+    HTTP.dispatchQueue.async { do { try runServer() } catch {} }
+  }
+  public func stop() {
+    HTTP.serverActive = false
+    try? HTTP.server?.stop()
+  }
+
+  deinit { stop() }
+}
+
+extension UInt16 { public init(networkByteOrder input: UInt16) { self.init(bigEndian: input) } }
+
+class TCPSocket: CustomStringConvertible {
+  #if !os(Windows)
+    #if os(Linux) || os(Android) || os(FreeBSD)
+      private let sendFlags = CInt(MSG_NOSIGNAL)
+    #else
+      private let sendFlags = CInt(0)
+    #endif
+  #endif
+  var description: String {
+    return "TCPSocket @ 0x" + String(unsafeBitCast(self, to: UInt.self), radix: 16)
+  }
+  let listening: Bool
+  private var socket: SOCKET!
+  private var socketAddress = UnsafeMutablePointer<sockaddr_in>.allocate(capacity: 1)
+  private(set) var port: UInt16
+  private func isNotNegative(r: CInt) -> Bool { return r != -1 }
+  private func isZero(r: CInt) -> Bool { return r == 0 }
+  private func attempt<T>(
+    _ name: String, file: String = #file, line: UInt = #line, valid: (T) -> Bool,
+    _ b: @autoclosure () -> T
+  ) throws -> T {
+    let r = b()
+    guard valid(r) else {
+      throw HTTP.ServerError(operation: name, errno: errno, file: file, line: line)
+    }
+    return r
+  }
+  init(socket: SOCKET) {
+    self.socket = socket
+    self.port = 0
+    listening = false
+  }
+  init(port: UInt16?) throws {
+    listening = true
+    self.port = 0
+    #if os(Windows)
+      socket = try attempt(
+        "WSASocketW", valid: { $0 != INVALID_SOCKET },
+        WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP.rawValue, nil, 0, DWORD(WSA_FLAG_OVERLAPPED)))
+      var value: Int8 = 1
+      _ = try attempt(
+        "setsockopt", valid: { $0 == 0 },
+        setsockopt(
+          socket, SOL_SOCKET, SO_REUSEADDR, &value, Int32(MemoryLayout.size(ofValue: value))))
+    #else
+      #if os(Linux) && !os(Android)
+        let SOCKSTREAM = Int32(SOCK_STREAM.rawValue)
+      #else
+        let SOCKSTREAM = SOCK_STREAM
+      #endif
+      #if canImport(Darwin)
+        socket = try attempt(
+          "socket", valid: { $0 >= 0 }, Darwin.socket(AF_INET, SOCKSTREAM, Int32(IPPROTO_TCP)))
+      #else
+        socket = try attempt(
+          "socket", valid: { $0 >= 0 }, SwiftGlibc.socket(AF_INET, SOCKSTREAM, Int32(IPPROTO_TCP)))
+      #endif
+
+      var on: CInt = 1
+      _ = try attempt(
+        "setsockopt", valid: { $0 == 0 },
+        setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, socklen_t(MemoryLayout<CInt>.size)))
+    #endif
+    let sa = createSockaddr(port)
+    socketAddress.initialize(to: sa)
+    try socketAddress.withMemoryRebound(
+      to: sockaddr.self,
+      capacity: MemoryLayout<sockaddr>.size,
+      {
+        let addr = UnsafePointer<sockaddr>($0)
+        _ = try attempt(
+          "bind", valid: isZero, bind(socket, addr, socklen_t(MemoryLayout<sockaddr>.size)))
+        _ = try attempt("listen", valid: isZero, listen(socket, SOMAXCONN))
+      }
+    )
+    var actualSA = sockaddr_in()
+    withUnsafeMutablePointer(to: &actualSA) { ptr in
+      ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+        (ptr: UnsafeMutablePointer<sockaddr>) in var len = socklen_t(MemoryLayout<sockaddr>.size)
+        getsockname(socket, ptr, &len)
+      }
+    }
+    self.port = UInt16(networkByteOrder: actualSA.sin_port)
+  }
+  private func createSockaddr(_ port: UInt16?) -> sockaddr_in {
+    let addr = UInt32(INADDR_LOOPBACK).bigEndian
+    let netPort = UInt16(bigEndian: port ?? 0)
+    #if os(Android)
+      return sockaddr_in(
+        sin_family: sa_family_t(AF_INET), sin_port: netPort, sin_addr: in_addr(s_addr: addr),
+        __pad: (0, 0, 0, 0, 0, 0, 0, 0))
+    #elseif os(Linux)
+      return sockaddr_in(
+        sin_family: sa_family_t(AF_INET), sin_port: netPort, sin_addr: in_addr(s_addr: addr),
+        sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
+    #elseif os(Windows)
+      return sockaddr_in(
+        sin_family: ADDRESS_FAMILY(AF_INET), sin_port: USHORT(netPort),
+        sin_addr: IN_ADDR(S_un: in_addr.__Unnamed_union_S_un(S_addr: addr)),
+        sin_zero: (CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0), CHAR(0)))
+    #else
+      return sockaddr_in(
+        sin_len: 0, sin_family: sa_family_t(AF_INET), sin_port: netPort,
+        sin_addr: in_addr(s_addr: addr), sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
+    #endif
+  }
+  func acceptConnection() throws -> TCPSocket {
+    guard listening else { fatalError("Trying to listen on a client connection socket") }
+    let connection: SOCKET = try socketAddress.withMemoryRebound(
+      to: sockaddr.self,
+      capacity: MemoryLayout<sockaddr>.size,
+      {
+        let addr = UnsafeMutablePointer<sockaddr>($0)
+        var sockLen = socklen_t(MemoryLayout<sockaddr>.size)
+        #if os(Windows)
+          let connectionSocket = try attempt(
+            "WSAAccept", valid: { $0 != INVALID_SOCKET }, WSAAccept(socket, addr, &sockLen, nil, 0))
+        #else
+          let connectionSocket = try attempt(
+            "accept", valid: { $0 >= 0 }, accept(socket, addr, &sockLen))
+        #endif
+        #if canImport(Darwin)
+          // Disable SIGPIPEs when writing to closed sockets
+          var on: CInt = 1
+          guard
+            setsockopt(
+              connectionSocket, SOL_SOCKET, SO_NOSIGPIPE, &on, socklen_t(MemoryLayout<CInt>.size))
+              == 0
+          else {
+            close(connectionSocket)
+            throw HTTP.ServerError.init(
+              operation: "setsockopt", errno: errno, file: #file, line: #line)
+          }
+        #endif
+        return connectionSocket
+      }
+    )
+    return TCPSocket(socket: connection)
+  }
+  func readData() throws -> Data? {
+    guard let connectionSocket = socket else { throw InternalServerError.socketAlreadyClosed }
+    var buffer = [CChar](repeating: 0, count: 4096)
+    #if os(Windows)
+      var dwNumberOfBytesRecieved: DWORD = 0
+      try buffer.withUnsafeMutableBufferPointer {
+        var wsaBuffer: WSABUF = WSABUF(len: ULONG($0.count), buf: $0.baseAddress)
+        var flags: DWORD = 0
+        _ = try attempt(
+          "WSARecv", valid: { $0 != SOCKET_ERROR },
+          WSARecv(connectionSocket, &wsaBuffer, 1, &dwNumberOfBytesRecieved, &flags, nil, nil))
+      }
+      let length = Int(dwNumberOfBytesRecieved)
+    #else
+      let length = try attempt(
+        "read", valid: { $0 >= 0 }, read(connectionSocket, &buffer, buffer.count))
+    #endif
+    guard length > 0 else { return nil }
+    return Data(bytes: buffer, count: length)
+  }
+  func writeRawData(_ data: Data) throws {
+    guard let connectionSocket = socket else { throw InternalServerError.socketAlreadyClosed }
+    #if os(Windows)
+      _ = try data.withUnsafeBytes {
+        var dwNumberOfBytesSent: DWORD = 0
+        var wsaBuffer: WSABUF = WSABUF(
+          len: ULONG(data.count),
+          buf: UnsafeMutablePointer<CHAR>(mutating: $0.bindMemory(to: CHAR.self).baseAddress))
+        _ = try attempt(
+          "WSASend", valid: { $0 != SOCKET_ERROR },
+          WSASend(connectionSocket, &wsaBuffer, 1, &dwNumberOfBytesSent, 0, nil, nil))
+      }
+    #else
+      _ = try data.withUnsafeBytes { ptr in
+        try attempt(
+          "send", valid: { $0 == data.count },
+          CInt(send(connectionSocket, ptr.baseAddress!, data.count, sendFlags)))
+      }
+    #endif
+  }
+  func writeData(header: String, bodyData: Data) throws {
+    var totalData = Data(header.utf8)
+    totalData.append(bodyData)
+    try writeRawData(totalData)
+  }
+  func closeSocket() throws {
+    guard socket != nil else { return }
+    #if os(Windows)
+      if listening { shutdown(socket, SD_BOTH) }
+      closesocket(socket)
+    #else
+      if listening { shutdown(socket, CInt(SHUT_RDWR)) }
+      close(socket)
+    #endif
+    socket = nil
+  }
+  deinit { try? closeSocket() }
+}
+#endif
+
+public struct Headers {
+  public static let VERSION = "HTTP/1.1"
+  public static let CRLF = "\r\n"
+  public static let CRLF2 = CRLF + CRLF
+  public static let EMPTY = ""
+  public static let SPACE = " "
+}
+
+extension HTTP {
+
+  class Server: CustomStringConvertible {
+    public var description: String {
+      return "HTTPServer @ 0x" + String(unsafeBitCast(self, to: UInt.self), radix: 16)
+    }
+#if !canImport(WASILibc)
+    struct SocketDataReader {
+      private let tcpSocket: TCPSocket
+      private var buffer = Data()
+      init(socket: TCPSocket) { tcpSocket = socket }
+      mutating func readBlockSeparated(by separatorData: Data) throws -> Data {
+        var range = buffer.range(of: separatorData)
+        while range == nil {
+          guard let data = try tcpSocket.readData() else { break }
+          buffer.append(data)
+          range = buffer.range(of: separatorData)
+        }
+        guard let r = range else { throw InternalServerError.requestTooShort }
+        let result = buffer.prefix(upTo: r.lowerBound)
+        buffer = buffer.suffix(from: r.upperBound)
+        return result
+      }
+      mutating func readBytes(count: Int) throws -> Data {
+        while buffer.count < count {
+          guard let data = try tcpSocket.readData() else { break }
+
+          buffer.append(data)
+        }
+        guard buffer.count >= count else { throw InternalServerError.requestTooShort }
+        let endIndex = buffer.startIndex + count
+        let result = buffer[buffer.startIndex..<endIndex]
+        buffer = buffer[endIndex...]
+        return result
+      }
+    }
+    let tcpSocket: TCPSocket
+
+    public init(port: UInt16?) throws { tcpSocket = try TCPSocket(port: port) }
+    init(socket: TCPSocket) { tcpSocket = socket }
+    public class func create(port: UInt16?) throws -> Server { return try Server(port: port) }
+    public func listen() throws -> Server {
+      let connection = try tcpSocket.acceptConnection()
+      return Server(socket: connection)
+    }
+    public func stop() throws { try tcpSocket.closeSocket() }
+    func request() throws -> Request {
+      var reader = SocketDataReader(socket: tcpSocket)
+      let headerData = try reader.readBlockSeparated(by: Headers.CRLF2.data(using: .ascii)!)
+      guard let headerString = String(bytes: headerData, encoding: .ascii) else {
+        throw InternalServerError.requestTooShort
+      }
+      var request = try Request(header: headerString)
+      if let contentLength = request.getHeader(for: "Content-Length"),
+        let length = Int(contentLength), length > 0
+      {
+        let messageData = try reader.readBytes(count: length)
+        request.messageData = messageData
+        request.messageBody = String(bytes: messageData, encoding: .utf8)
+        return request
+      } else if (request.getHeader(for: "Transfer-Encoding") ?? "").lowercased() == "chunked" {
+        // According to RFC7230 https://tools.ietf.org/html/rfc7230#section-3
+        // We receive messageBody after the headers, so we need read from socket minimum 2 times
+        //
+        // HTTP-message structure
+        //
+        // start-line
+        // *( header-field CRLF )
+        // CRLF
+        // [ message-body ]
+        // We receives '{numofbytes}\r\n{data}\r\n'
+
+        // There maybe some part of the body in the initial data
+
+        let bodySeparator = Headers.CRLF.data(using: .ascii)!
+        var messageData = Data()
+        var finished = false
+        while !finished {
+          let chunkSizeData = try reader.readBlockSeparated(by: bodySeparator)
+          // Should now have <num bytes>\r\n
+          guard let number = String(bytes: chunkSizeData, encoding: .ascii),
+            let chunkSize = Int(number, radix: 16)
+          else { throw InternalServerError.requestTooShort }
+          if chunkSize == 0 {
+            finished = true
+            break
+          }
+          let chunkData = try reader.readBytes(count: chunkSize)
+          messageData.append(chunkData)
+          // Next 2 bytes should be \r\n to indicate the end of the chunk
+          let endOfChunk = try reader.readBytes(count: bodySeparator.count)
+          guard endOfChunk == bodySeparator else { throw InternalServerError.requestTooShort }
+        }
+        request.messageData = messageData
+        request.messageBody = String(bytes: messageData, encoding: .utf8)
+      }
+      return request
+    }
+    func respond(with response: Response) throws {
+      try tcpSocket.writeData(header: response.header, bodyData: response.bodyData)
+    }
+    #endif
+  }
+
+  public struct Request: CustomStringConvertible {
+    enum Method: String {
+      case HEAD
+      case GET
+      case POST
+      case PUT
+      case DELETE
+    }
+    enum Error: Swift.Error {
+      case invalidURI
+      case invalidMethod
+      case headerEndNotFound
+    }
+    let method: Method
+    public let uri: String
+    private(set) var headers: [String] = []
+    private(set) var parameters: [String: String] = [:]
+    var messageBody: String?
+    var messageData: Data?
+    public var description: String { return "\(method.rawValue) \(uri)" }
+    public subscript(_ key: String) -> String? { parameters[key] }
+    init(header: String) throws {
+      self.headers = header.components(separatedBy: Headers.CRLF)
+      guard headers.count > 0 else { throw Error.invalidURI }
+      let uriParts = headers[0].components(separatedBy: " ")
+      guard uriParts.count > 2, let methodName = Method(rawValue: uriParts[0]) else {
+        throw Error.invalidMethod
+      }
+      method = methodName
+      let params = uriParts[1].split(separator: "?", maxSplits: 1, omittingEmptySubsequences: true)
+      if params.count > 1 {
+        for arg in params[1].split(separator: "&", omittingEmptySubsequences: true) {
+          let keyValue = arg.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+          guard !keyValue.isEmpty else { continue }
+          guard let key = keyValue[0].removingPercentEncoding else { throw Error.invalidURI }
+          guard let value = (keyValue.count > 1) ? keyValue[1].removingPercentEncoding : "" else {
+            throw Error.invalidURI
+          }
+          self.parameters[key] = value
+        }
+      }
+      self.uri = String(params[0])
+    }
+    public func getCommaSeparatedHeaders() -> String {
+      var allHeaders = ""
+      for header in headers { allHeaders += header + "," }
+      return allHeaders
+    }
+    public func getHeader(for key: String) -> String? {
+      let lookup = key.lowercased()
+      for header in headers {
+        let parts = header.components(separatedBy: ":")
+        if parts[0].lowercased() == lookup {
+          return parts[1].trimmingCharacters(in: CharacterSet(charactersIn: " "))
+        }
+      }
+      return nil
+    }
+    public func headersAsJSON() throws -> Data {
+      var headerDict: [String: String] = [:]
+      for header in headers {
+        if header.hasPrefix(method.rawValue) {
+          headerDict["uri"] = header
+          continue
+        }
+        let parts = header.components(separatedBy: ":")
+        if parts.count > 1 {
+          headerDict[parts[0]] = parts[1].trimmingCharacters(in: CharacterSet(charactersIn: " "))
+        }
+      }
+      // Include the body as a Base64 Encoded entry
+      if let bodyData = messageData ?? messageBody?.data(using: .utf8) {
+        headerDict["x-base64-body"] = bodyData.base64EncodedString()
+      }
+      if #available(macOS 10.13, *) {
+        return try JSONSerialization.data(withJSONObject: headerDict, options: .sortedKeys)
+      } else {
+        return try JSONSerialization.data(withJSONObject: headerDict)
+      }
+    }
+  }
+
+  public struct Response {
+    public enum ResponseCode: Int {
+      case OK = 200
+      case FOUND = 302
+      case BAD_REQUEST = 400
+      case NOT_FOUND = 404
+      case METHOD_NOT_ALLOWED = 405
+      case SERVER_ERROR = 500
+    }
+
+    private let responseCode: Int
+    private var headers: [String]
+    public let bodyData: Data
+    public init(responseCode: Int = 200, headers: [String] = [], bodyData: Data) {
+      self.responseCode = responseCode
+      self.headers = headers
+      self.bodyData = bodyData
+      for header in headers { if header.lowercased().hasPrefix("content-length") { return } }
+      self.headers.append("Content-Length: \(bodyData.count)")
+    }
+    public init(html: HTML) {
+      #if os(Linux)
+        let headers = ["Content-Type: text/html; charset=utf-8", "Content-Encoding: gzip"]
+        let bodyData = html.data.gzipped()
+      #else
+        let headers = ["Content-Type: text/html; charset=utf-8"]
+        let bodyData = html.data
+      #endif
+      self.init(responseCode: 200, headers: headers, bodyData: bodyData)
+    }
+    public init(response: ResponseCode, headers: [String] = [], bodyData: Data = Data()) {
+      self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData)
+    }
+    public init(response: ResponseCode, headers: String = Headers.EMPTY, bodyData: Data) {
+      let headers = headers.split(separator: "\r\n").map { String($0) }
+      self.init(responseCode: response.rawValue, headers: headers, bodyData: bodyData)
+    }
+    public init(response: ResponseCode, headers: String = Headers.EMPTY, body: String) throws {
+      guard let data = body.data(using: .utf8) else { throw InternalServerError.badBody }
+      self.init(response: response, headers: headers, bodyData: data)
+    }
+    public init?(responseCode: Int = 200, headers: [String] = [], body: String) {
+      guard let data = body.data(using: .utf8) else { return nil }
+      self.init(responseCode: responseCode, headers: headers, bodyData: data)
+    }
+    public var header: String {
+      let responseCodeName = ""
+      let statusLine =
+        Headers.VERSION + Headers.SPACE + "\(responseCode)" + Headers.SPACE + "\(responseCodeName)"
+      let header = headers.joined(separator: "\r\n")
+      return statusLine + (header != Headers.EMPTY ? Headers.CRLF + header : Headers.EMPTY)
+        + Headers.CRLF2
+    }
+    mutating func addHeader(_ header: String) { headers.append(header) }
+  }
+
+  public struct ServerError: Error {
+    let operation: String
+    let errno: CInt
+    let file: String
+    let line: UInt
+    public var _code: Int { return Int(errno) }
+    public var _domain: String { return NSPOSIXErrorDomain }
   }
 }
+
+enum InternalServerError: Error {
+  case socketAlreadyClosed
+  case requestTooShort
+  case badBody
+}
+
+#if os(Linux)
+  import CZLib
+
+  extension Data {
+    /// Whether the receiver is compressed in gzip format.
+    public var isGzipped: Bool { self.starts(with: [0x1f, 0x8b]) }
+    /// Create a new `Data` instance by compressing the receiver using zlib.
+    /// Throws an error if compression failed.
+    ///
+    /// - Parameter level: Compression level.
+    /// - Returns: Gzip-compressed `Data` instance.
+    /// - Throws: `GzipError`
+    public func gzipped(level: CompressionLevel = .defaultCompression) -> Data {
+      guard !self.isEmpty else { return Data() }
+      var stream = z_stream()
+      var status: Int32
+      status = deflateInit2_(
+        &stream, level.rawValue, Z_DEFLATED, MAX_WBITS + 16, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY,
+        ZLIB_VERSION, Int32(DataSize.stream))
+      guard status == Z_OK else { return self }
+      var data = Data(capacity: DataSize.chunk)
+      repeat {
+        if Int(stream.total_out) >= data.count { data.count += DataSize.chunk }
+        let inputCount = self.count
+        let outputCount = data.count
+        self.withUnsafeBytes { (inputPointer: UnsafeRawBufferPointer) in
+          stream.next_in = UnsafeMutablePointer<Bytef>(
+            mutating: inputPointer.bindMemory(to: Bytef.self).baseAddress!
+          ).advanced(by: Int(stream.total_in))
+          stream.avail_in = uint(inputCount) - uInt(stream.total_in)
+          data.withUnsafeMutableBytes { (outputPointer: UnsafeMutableRawBufferPointer) in
+            stream.next_out = outputPointer.bindMemory(to: Bytef.self).baseAddress!.advanced(
+              by: Int(stream.total_out))
+            stream.avail_out = uInt(outputCount) - uInt(stream.total_out)
+            status = deflate(&stream, Z_FINISH)
+            stream.next_out = nil
+          }
+          stream.next_in = nil
+        }
+      } while stream.avail_out == 0
+      guard deflateEnd(&stream) == Z_OK, status == Z_STREAM_END else { return self }
+      data.count = Int(stream.total_out)
+      return data
+    }
+  }
+
+  private enum DataSize {
+    static let chunk = 1 << 14
+    static let stream = MemoryLayout<z_stream>.size
+  }
+
+  /// Compression level whose rawValue is based on the zlib's constants.
+  public struct CompressionLevel: RawRepresentable {
+    /// Compression level in the range of `0` (no compression) to `9` (maximum compression).
+    public let rawValue: Int32
+    public static let noCompression = CompressionLevel(Z_NO_COMPRESSION)
+    public static let bestSpeed = CompressionLevel(Z_BEST_SPEED)
+    public static let bestCompression = CompressionLevel(Z_BEST_COMPRESSION)
+    public static let defaultCompression = CompressionLevel(Z_DEFAULT_COMPRESSION)
+    public init(rawValue: Int32) { self.rawValue = rawValue }
+    public init(_ rawValue: Int32) { self.rawValue = rawValue }
+  }
+#endif
