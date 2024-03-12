@@ -546,7 +546,7 @@ enum InternalServerError: Error {
   case badBody
 }
 
-#if os(Linux)
+#if canImport(Glibc)
   import CZLib
 
   extension Data {
