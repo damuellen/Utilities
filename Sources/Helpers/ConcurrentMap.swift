@@ -8,8 +8,19 @@
 //  http://www.apache.org/licenses/LICENSE-2.0
 //
 
-import Dispatch
 import Foundation
+#if canImport(WASILibc)
+extension RandomAccessCollection {
+  /// Returns `self.map(transform)`, computed in parallel.
+  @inlinable
+  public func concurrentMap<E>(_ transform: (Element) -> E)
+    -> [E]
+  {
+    self.map(transform)
+  }
+}
+#else
+import Dispatch
 
 extension RandomAccessCollection {
   /// Returns `self.map(transform)`, computed in parallel.
@@ -35,3 +46,4 @@ extension RandomAccessCollection {
     }
   }
 }
+#endif
